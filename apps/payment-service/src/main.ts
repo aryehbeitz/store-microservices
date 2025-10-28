@@ -193,7 +193,35 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
 
     console.error('Failed to send webhook:', error);
 
-    // Retry logic could be added here
+    // If webhook fails, mark payment as error instead of auto-approving
+    console.log('Webhook failed - marking payment as error for order:', paymentRequest.orderId);
+    
+    // Try to send error status to backend
+    try {
+      const errorWebhook: PaymentWebhook = {
+        orderId: paymentRequest.orderId,
+        paymentId: Math.random().toString(36).substring(2, 15),
+        status: 'error',
+        message: 'Payment processing failed - webhook could not be delivered',
+      };
+
+      // Try alternative backend URL (for port forwarding scenarios)
+      const alternativeBackendUrl = process.env.ALTERNATIVE_BACKEND_URL || 'http://localhost:3000';
+      console.log(`Trying alternative backend URL: ${alternativeBackendUrl}/api/webhook/payment`);
+      
+      await axios.post(`${alternativeBackendUrl}/api/webhook/payment`, errorWebhook, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 5000, // 5 second timeout
+      });
+      
+      console.log('Error webhook sent successfully to alternative URL');
+    } catch (altError) {
+      console.error('Failed to send error webhook to alternative URL:', altError);
+      // If both webhook attempts fail, we can't update the order status
+      // The order will remain in 'pending' status
+    }
   }
 }
 

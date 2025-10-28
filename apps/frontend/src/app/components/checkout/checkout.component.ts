@@ -37,11 +37,17 @@ export class CheckoutComponent implements OnInit {
         this.router.navigate(['/cart']);
       }
     });
+
+    // Load saved shipping info from localStorage
+    this.loadSavedShippingInfo();
   }
 
   async onSubmit() {
     if (this.checkoutForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
+
+      // Save shipping info to localStorage
+      this.saveShippingInfo();
 
       const orderData: CreateOrderRequest = {
         items: this.cart.items,
@@ -67,6 +73,35 @@ export class CheckoutComponent implements OnInit {
           alert('Failed to place order. Please try again.');
         },
       });
+    }
+  }
+
+  private loadSavedShippingInfo(): void {
+    try {
+      const savedInfo = localStorage.getItem('honey-store-shipping-info');
+      if (savedInfo) {
+        const shippingInfo = JSON.parse(savedInfo);
+        this.checkoutForm.patchValue({
+          customerName: shippingInfo.customerName || '',
+          customerEmail: shippingInfo.customerEmail || '',
+          shippingAddress: shippingInfo.shippingAddress || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading saved shipping info:', error);
+    }
+  }
+
+  private saveShippingInfo(): void {
+    try {
+      const shippingInfo = {
+        customerName: this.checkoutForm.value.customerName,
+        customerEmail: this.checkoutForm.value.customerEmail,
+        shippingAddress: this.checkoutForm.value.shippingAddress,
+      };
+      localStorage.setItem('honey-store-shipping-info', JSON.stringify(shippingInfo));
+    } catch (error) {
+      console.error('Error saving shipping info:', error);
     }
   }
 }

@@ -23,11 +23,6 @@
         </div>
       </div>
     </div>
-    <button class="refresh-btn" (click)="loadOrders()" [disabled]="loading">
-      <span *ngIf="loading">⟳</span>
-      <span *ngIf="!loading">↻</span>
-      Refresh
-    </button>
   </div>
 
   <div *ngIf="error" class="error-message">
