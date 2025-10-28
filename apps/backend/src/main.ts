@@ -467,12 +467,12 @@ app.delete('/api/orders', async (req, res) => {
 // Version update endpoint for watch script
 app.post('/api/version-update', (req, res) => {
   const { service, version } = req.body;
-  
+
   console.log(`Version update received: ${service} → ${version}`);
-  
+
   // Emit version update event to all connected clients
   io.emit('version-update', { service, version });
-  
+
   res.json({ message: 'Version update broadcasted' });
 });
 

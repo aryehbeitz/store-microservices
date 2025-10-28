@@ -85,6 +85,11 @@ if command -v curl &> /dev/null; then
                     echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
                     kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
                     echo -e "${GREEN}✓ Payment service updated to use ngrok backend${NC}"
+
+                    # Update backend to know ngrok is available
+                    echo -e "\n${YELLOW}Updating backend to know ngrok is available...${NC}"
+                    kubectl set env deployment/backend CONNECTION_METHOD="ngrok"
+                    echo -e "${GREEN}✓ Backend updated to know ngrok is available${NC}"
                 else
                     echo -e "${YELLOW}Could not extract backend URL${NC}"
                 fi
@@ -102,6 +107,11 @@ if command -v curl &> /dev/null; then
                     echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
                     kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
                     echo -e "${GREEN}✓ Payment service updated to use ngrok backend${NC}"
+
+                    # Update backend to know ngrok is available
+                    echo -e "\n${YELLOW}Updating backend to know ngrok is available...${NC}"
+                    kubectl set env deployment/backend CONNECTION_METHOD="ngrok"
+                    echo -e "${GREEN}✓ Backend updated to know ngrok is available${NC}"
                 else
                     echo -e "${YELLOW}Could not extract backend URL${NC}"
                 fi

@@ -22,19 +22,19 @@ const packageJsonPath = path.join(__dirname, '..', 'apps', service, 'package.jso
 
 try {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  
+
   // Parse current version (format: "1.0.0-2025-10-29")
   const versionMatch = packageJson.version.match(/^(\d+)\.(\d+)\.(\d+)-(\d{4}-\d{2}-\d{2})$/);
-  
+
   if (!versionMatch) {
     console.error(`Invalid version format: ${packageJson.version}`);
     console.error('Expected format: X.Y.Z-YYYY-MM-DD');
     process.exit(1);
   }
-  
+
   const [, major, minor, patch, date] = versionMatch;
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  
+
   let newVersion;
   if (date === today) {
     // Same day, increment patch
@@ -44,13 +44,13 @@ try {
     // New day, reset to 1.0.0
     newVersion = `1.0.0-${today}`;
   }
-  
+
   packageJson.version = newVersion;
-  
+
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-  
+
   console.log(`✅ ${service} version bumped to ${newVersion}`);
-  
+
 } catch (error) {
   console.error(`Error bumping version for ${service}:`, error.message);
   process.exit(1);

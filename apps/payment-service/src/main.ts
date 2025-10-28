@@ -156,14 +156,14 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
     path: '/api/webhook/payment',
   };
 
-  // Check if we're in a port-forwarding scenario
-  // In port-forwarding, the backend service is accessible from within the cluster
-  // but the frontend can't receive real-time updates, so we should simulate webhook failure
+  // Check if we're in a port-forwarding scenario (no ngrok)
+  // In port-forwarding, orders should stay pending until ngrok is available
   const isPortForwarding = CONNECTION_METHOD === 'port-forward';
+  const isNgrokAvailable = CONNECTION_METHOD === 'ngrok';
 
-  if (isPortForwarding) {
-    console.log('Port-forwarding detected - simulating webhook failure to demonstrate limitation');
-    console.log('Order will remain in pending status to show webhook limitation');
+  if (isPortForwarding && !isNgrokAvailable) {
+    console.log('Port-forwarding only detected - keeping order pending until ngrok is available');
+    console.log('Order will remain in pending status to demonstrate webhook limitation');
 
     // Don't send any webhook - let the order stay pending
     // This demonstrates the limitation of port-forwarding for webhook delivery

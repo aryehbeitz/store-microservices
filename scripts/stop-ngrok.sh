@@ -15,4 +15,10 @@ fi
 # Stop port forwards
 ./scripts/stop-port-forward.sh 2>/dev/null
 
+# Reset connection methods back to port-forward
+echo "Resetting connection methods back to port-forward..."
+kubectl set env deployment/backend CONNECTION_METHOD="port-forward"
+kubectl set env deployment/payment-service CONNECTION_METHOD="port-forward"
+echo "✓ Connection methods reset to port-forward"
+
 echo "All ngrok tunnels and port forwards stopped"

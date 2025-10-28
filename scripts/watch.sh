@@ -26,15 +26,15 @@ get_version() {
 deploy_service() {
     local service=$1
     local timestamp=$(date +%Y%m%d-%H%M%S)
-    
+
     echo -e "${YELLOW}🔄 Building and deploying $service...${NC}"
-    
+
     # Build Docker image
     docker build -t honey-store/$service:$timestamp -t honey-store/$service:latest -f apps/$service/Dockerfile . > /dev/null 2>&1
-    
+
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Docker image built for $service${NC}"
-        
+
         # Deploy to Kubernetes
         case $service in
             "frontend")
@@ -50,10 +50,10 @@ deploy_service() {
                 kubectl rollout status deployment/payment-service --timeout=60s > /dev/null 2>&1
                 ;;
         esac
-        
+
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}✓ $service deployed successfully${NC}"
-            
+
             # If it's frontend, show notification info
             if [ "$service" = "frontend" ]; then
                 echo -e "${YELLOW}📱 Frontend updated! Check browser for reload notification${NC}"
@@ -70,7 +70,7 @@ deploy_service() {
 show_notification() {
     local service=$1
     local version=$2
-    
+
     # Try to send a simple HTTP request to trigger frontend notification
     # This is a simple approach - in a real app you'd use WebSockets or Server-Sent Events
     curl -s "http://localhost:3000/api/version-update" \
@@ -94,23 +94,23 @@ echo -e "${YELLOW}Use 'npm run version:<service>' to bump versions${NC}\n"
 # Watch loop
 while true; do
     sleep 2
-    
+
     # Check each service for version changes
     for service in frontend backend payment-service; do
         current_version=$(get_version $service)
-        
+
         if [ "$current_version" != "${versions[$service]}" ] && [ "$current_version" != "unknown" ]; then
             echo -e "${GREEN}🚀 Version change detected for $service: ${versions[$service]} → $current_version${NC}"
-            
+
             # Update stored version
             versions[$service]=$current_version
-            
+
             # Deploy the service
             deploy_service $service
-            
+
             # Show notification
             show_notification $service $current_version
-            
+
             echo -e "${YELLOW}Continuing to watch...${NC}\n"
         fi
     done
