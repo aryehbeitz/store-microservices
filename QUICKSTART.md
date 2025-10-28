@@ -26,7 +26,7 @@ npm install
 ### Step 2: Start Kubernetes & Build Images
 
 ```bash
-./scripts/rebuild-dependencies.sh
+./scripts/build-and-deploy.sh
 ```
 
 **This will:**
@@ -41,7 +41,7 @@ npm install
 ### Step 3: Deploy Services
 
 ```bash
-./scripts/deploy-changes.sh
+# (now included in build-and-deploy.sh)
 ```
 
 **This will:**
@@ -161,8 +161,8 @@ kubectl get pods
 kubectl logs -f deployment/backend
 
 # Rebuild and redeploy
-./scripts/rebuild-dependencies.sh
-./scripts/deploy-changes.sh
+./scripts/build-and-deploy.sh
+# (now included in build-and-deploy.sh)
 ```
 
 ---
@@ -189,8 +189,8 @@ lsof -ti:3000 | xargs kill -9
 ```bash
 minikube delete
 minikube start --cpus=4 --memory=4096
-./scripts/rebuild-dependencies.sh
-./scripts/deploy-changes.sh
+./scripts/build-and-deploy.sh
+# (now included in build-and-deploy.sh)
 ```
 
 ---

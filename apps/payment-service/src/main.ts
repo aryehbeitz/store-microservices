@@ -159,22 +159,19 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
   // Check if we're in a port-forwarding scenario
   // In port-forwarding, the backend service is accessible from within the cluster
   // but the frontend can't receive real-time updates, so we should simulate webhook failure
-  const isPortForwarding = CONNECTION_METHOD === 'port-forward' || 
-                          process.env.KUBERNETES_SERVICE_HOST && 
-                          !process.env.NGROK_URL && 
-                          !process.env.TELEPRESENCE_ROOT;
+  const isPortForwarding = CONNECTION_METHOD === 'port-forward';
 
   if (isPortForwarding) {
     console.log('Port-forwarding detected - simulating webhook failure to demonstrate limitation');
     console.log('Order will remain in pending status to show webhook limitation');
-    
+
     // Don't send any webhook - let the order stay pending
     // This demonstrates the limitation of port-forwarding for webhook delivery
     const duration = Date.now() - startTime;
     log.status = 200;
     log.duration = duration;
     logRequest(log);
-    
+
     console.log('Webhook not sent due to port-forwarding limitation - order remains pending');
     return;
   }

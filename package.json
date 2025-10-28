@@ -11,8 +11,7 @@
     "build:status": "nx show projects --affected --type=app",
     "test": "nx affected --target=test --parallel=3 --base=master",
     "test:all": "nx run-many --target=test --all --parallel=3",
-    "rebuild": "./scripts/rebuild-dependencies.sh",
-    "deploy": "./scripts/deploy-changes.sh",
+    "build-and-deploy": "./scripts/build-and-deploy.sh",
     "port-forward": "./scripts/port-forward.sh",
     "ngrok:start": "./scripts/ngrok-start.sh",
     "telepresence:start": "./scripts/telepresence-start.sh"

@@ -27,11 +27,11 @@ if ! ngrok config check &> /dev/null; then
     exit 1
 fi
 
-echo "Starting port forwards first..."
+echo "Starting port forwards for all services..."
 # Kill any existing port forwards
 ./scripts/stop-port-forward.sh 2>/dev/null
 
-# Start port forwards in background
+# Start port forwards for all services
 kubectl port-forward service/backend 3000:3000 > /dev/null 2>&1 &
 BACKEND_PF_PID=$!
 echo $BACKEND_PF_PID > /tmp/port-forward-backend.pid
@@ -46,66 +46,88 @@ echo $FRONTEND_PF_PID > /tmp/port-forward-frontend.pid
 
 sleep 3
 
-echo -e "${GREEN}✓ Port forwards established${NC}\n"
+echo -e "${GREEN}✓ Port forwards established for all services${NC}\n"
 
-# Create ngrok configuration
-cat > /tmp/ngrok-honey-store.yml << EOF
-version: "2"
-authtoken: $(ngrok config get-authtoken)
-tunnels:
-  backend:
-    proto: http
-    addr: 3000
-  payment:
-    proto: http
-    addr: 3002
-  frontend:
-    proto: http
-    addr: 8080
-EOF
+echo -e "${YELLOW}Starting ngrok tunnel for backend (webhook receiver)...${NC}"
+echo -e "${YELLOW}Note: Backend needs ngrok to receive payment webhooks${NC}"
 
-echo "Starting ngrok tunnels..."
-ngrok start --all --config /tmp/ngrok-honey-store.yml > /tmp/ngrok-output.log 2>&1 &
+# Start ngrok for backend (webhook receiver)
+ngrok http 3000 --log=stdout > /tmp/ngrok.log 2>&1 &
 NGROK_PID=$!
 echo $NGROK_PID > /tmp/ngrok.pid
 
+# Wait for ngrok to start up
+echo "Waiting for ngrok to start..."
 sleep 5
 
 echo -e "\n${BLUE}======================================${NC}"
 echo -e "${BLUE}  Ngrok Tunnel URLs                  ${NC}"
 echo -e "${BLUE}======================================${NC}\n"
 
-# Get tunnel URLs from ngrok API
+# Get tunnel URL from ngrok API
 if command -v curl &> /dev/null; then
-    TUNNELS=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null)
+    # Try multiple times to get the tunnel URL
+    for i in {1..5}; do
+        TUNNELS=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null)
 
-    if [ $? -eq 0 ] && [ -n "$TUNNELS" ]; then
-        echo "$TUNNELS" | grep -o '"public_url":"[^"]*"' | while read -r line; do
-            url=$(echo $line | sed 's/"public_url":"//;s/"//')
-            if [[ $url == *"backend"* ]]; then
-                echo -e "${GREEN}Backend:         $url${NC}"
-            elif [[ $url == *"payment"* ]]; then
-                echo -e "${GREEN}Payment Service: $url${NC}"
-            elif [[ $url == *"frontend"* ]]; then
-                echo -e "${GREEN}Frontend:        $url${NC}"
+        if [ $? -eq 0 ] && [ -n "$TUNNELS" ] && [ "$TUNNELS" != "null" ]; then
+            # Try jq first, fallback to grep/sed
+            if command -v jq &> /dev/null; then
+                BACKEND_URL=$(echo "$TUNNELS" | jq -r '.tunnels[0].public_url' 2>/dev/null)
+                if [ -n "$BACKEND_URL" ] && [ "$BACKEND_URL" != "null" ]; then
+                    echo -e "${GREEN}Backend (Ngrok):  $BACKEND_URL${NC}"
+                    echo -e "${GREEN}Frontend (Local): http://localhost:8080${NC}"
+                    echo -e "${GREEN}Payment (Local):  http://localhost:3002${NC}"
+                    echo -e "\n${YELLOW}Webhook Demo: Orders will update in real-time!${NC}"
+                    echo -e "${YELLOW}The backend can receive webhooks via the ngrok URL${NC}"
+
+                    # Update payment service to use ngrok URL for backend
+                    echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
+                    kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
+                    echo -e "${GREEN}✓ Payment service updated to use ngrok backend${NC}"
+                else
+                    echo -e "${YELLOW}Could not extract backend URL${NC}"
+                fi
             else
-                echo -e "${GREEN}Tunnel:          $url${NC}"
-            fi
-        done
+                # Fallback without jq
+                BACKEND_URL=$(echo "$TUNNELS" | grep -o '"public_url":"[^"]*"' | head -1 | sed 's/"public_url":"//;s/"//')
+                if [ -n "$BACKEND_URL" ]; then
+                    echo -e "${GREEN}Backend (Ngrok):  $BACKEND_URL${NC}"
+                    echo -e "${GREEN}Frontend (Local): http://localhost:8080${NC}"
+                    echo -e "${GREEN}Payment (Local):  http://localhost:3002${NC}"
+                    echo -e "\n${YELLOW}Webhook Demo: Orders will update in real-time!${NC}"
+                    echo -e "${YELLOW}The backend can receive webhooks via the ngrok URL${NC}"
 
-        echo -e "\n${YELLOW}Ngrok Web Interface: http://localhost:4040${NC}"
-    else
-        echo -e "${YELLOW}Could not fetch tunnel URLs from ngrok API${NC}"
-        echo -e "${YELLOW}Check ngrok web interface at: http://localhost:4040${NC}"
-    fi
+                    # Update payment service to use ngrok URL for backend
+                    echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
+                    kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
+                    echo -e "${GREEN}✓ Payment service updated to use ngrok backend${NC}"
+                else
+                    echo -e "${YELLOW}Could not extract backend URL${NC}"
+                fi
+            fi
+
+            echo -e "\n${YELLOW}Ngrok Web Interface: http://localhost:4040${NC}"
+            break
+        else
+            if [ $i -lt 5 ]; then
+                echo "Attempt $i failed, retrying in 2 seconds..."
+                sleep 2
+            else
+                echo -e "${YELLOW}Could not fetch tunnel URLs from ngrok API${NC}"
+                echo -e "${YELLOW}Check ngrok web interface at: http://localhost:4040${NC}"
+                echo -e "${YELLOW}Raw response: $TUNNELS${NC}"
+            fi
+        fi
+    done
 else
     echo -e "${YELLOW}Please check ngrok web interface at: http://localhost:4040${NC}"
 fi
 
 echo -e "\n${BLUE}======================================${NC}"
-echo -e "${YELLOW}Note: Tunnels are running in the background${NC}"
-echo -e "${YELLOW}To stop them, run: ./scripts/stop-ngrok.sh${NC}"
-echo -e "\n${BLUE}Press Ctrl+C to stop all ngrok tunnels${NC}"
+echo -e "${YELLOW}Note: Backend tunnel is running in the background${NC}"
+echo -e "${YELLOW}To stop it, run: ./scripts/stop-ngrok.sh${NC}"
+echo -e "\n${BLUE}Press Ctrl+C to stop ngrok tunnel${NC}"
 
 # Create stop script
 cat > scripts/stop-ngrok.sh << 'EOF'

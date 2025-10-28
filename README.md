@@ -54,7 +54,7 @@ npm install
 ### 2. Start Kubernetes Cluster
 
 ```bash
-./scripts/rebuild-dependencies.sh
+./scripts/build-and-deploy.sh
 ```
 
 This will:
@@ -65,7 +65,7 @@ This will:
 ### 3. Deploy Services
 
 ```bash
-./scripts/deploy-changes.sh
+# (now included in build-and-deploy.sh)
 ```
 
 This will deploy:
@@ -140,8 +140,8 @@ For testing with Kubernetes but local access:
 
 ```bash
 # Deploy to Kubernetes
-./scripts/rebuild-dependencies.sh
-./scripts/deploy-changes.sh
+./scripts/build-and-deploy.sh
+# (now included in build-and-deploy.sh)
 
 # Access via port forwarding
 ./scripts/port-forward.sh
@@ -162,8 +162,8 @@ For debugging with Kubernetes + local services:
 
 ```bash
 # Deploy to Kubernetes
-./scripts/rebuild-dependencies.sh
-./scripts/deploy-changes.sh
+./scripts/build-and-deploy.sh
+# (now included in build-and-deploy.sh)
 
 # Connect with Telepresence
 ./scripts/telepresence-start.sh
@@ -189,8 +189,8 @@ For testing webhooks and sharing with others:
 
 ```bash
 # Deploy to Kubernetes
-./scripts/rebuild-dependencies.sh
-./scripts/deploy-changes.sh
+./scripts/build-and-deploy.sh
+# (now included in build-and-deploy.sh)
 
 # Create public tunnels
 ./scripts/ngrok-start.sh
