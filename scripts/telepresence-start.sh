@@ -37,7 +37,19 @@ fi
 
 echo -e "${GREEN}✓ Connected to cluster${NC}\n"
 
-echo -e "${BLUE}Step 2: Setting up intercepts${NC}"
+# Update services to use telepresence connection method
+echo -e "${BLUE}Step 2: Updating services to use telepresence connection method${NC}"
+kubectl set env deployment/payment-service CONNECTION_METHOD="telepresence"
+kubectl set env deployment/backend CONNECTION_METHOD="telepresence"
+echo -e "${GREEN}✓ Services environment updated to telepresence mode${NC}"
+
+# Restart services to pick up new environment variables
+echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
+kubectl rollout restart deployment/payment-service
+kubectl rollout restart deployment/backend
+echo -e "${GREEN}✓ Services restarted successfully${NC}\n"
+
+echo -e "${BLUE}Step 3: Setting up intercepts${NC}"
 echo ""
 echo "Choose which service to intercept:"
 echo "  1) Backend"
@@ -127,7 +139,19 @@ echo "Stopping telepresence..."
 telepresence leave backend 2>/dev/null
 telepresence leave payment-service 2>/dev/null
 telepresence quit
+
+# Reset services to default connection method
+echo "Resetting services to default connection method..."
+kubectl set env deployment/payment-service CONNECTION_METHOD="direct"
+kubectl set env deployment/backend CONNECTION_METHOD="direct"
+
+# Restart services to pick up new environment variables
+echo "Restarting services to pick up new environment variables..."
+kubectl rollout restart deployment/payment-service
+kubectl rollout restart deployment/backend
+
 echo "Telepresence stopped"
+echo "Services reset to default connection method"
 EOF
 
 chmod +x scripts/stop-telepresence.sh

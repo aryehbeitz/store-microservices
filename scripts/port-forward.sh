@@ -82,6 +82,20 @@ echo -e "${GREEN}Backend:         http://localhost:3000${NC}"
 echo -e "${GREEN}Payment Service: http://localhost:3002${NC}"
 echo -e "${GREEN}Admin Dashboard: http://localhost:8080/secret-admin-dashboard-xyz${NC}"
 echo ""
+
+# Update services to use direct connection method
+echo -e "\n${YELLOW}Updating services to use direct connection method...${NC}"
+kubectl set env deployment/payment-service CONNECTION_METHOD="direct"
+kubectl set env deployment/backend CONNECTION_METHOD="direct"
+echo -e "${GREEN}✓ Services environment updated to direct mode${NC}"
+
+# Restart services to pick up new environment variables
+echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
+kubectl rollout restart deployment/payment-service
+kubectl rollout restart deployment/backend
+echo -e "${GREEN}✓ Services restarted successfully${NC}"
+
+echo ""
 echo -e "${YELLOW}Note: Port forwarding processes are running in the background${NC}"
 echo -e "${YELLOW}To stop them, run: ./scripts/stop-port-forward.sh${NC}"
 echo ""

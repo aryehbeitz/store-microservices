@@ -84,12 +84,18 @@ if command -v curl &> /dev/null; then
                     # Update payment service to use ngrok URL for backend
                     echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
                     kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
-                    echo -e "${GREEN}✓ Payment service updated to use ngrok backend${NC}"
+                    echo -e "${GREEN}✓ Payment service environment updated${NC}"
 
                     # Update backend to know ngrok is available
                     echo -e "\n${YELLOW}Updating backend to know ngrok is available...${NC}"
                     kubectl set env deployment/backend CONNECTION_METHOD="ngrok"
-                    echo -e "${GREEN}✓ Backend updated to know ngrok is available${NC}"
+                    echo -e "${GREEN}✓ Backend environment updated${NC}"
+
+                    # Restart services to pick up new environment variables
+                    echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
+                    kubectl rollout restart deployment/payment-service
+                    kubectl rollout restart deployment/backend
+                    echo -e "${GREEN}✓ Services restarted successfully${NC}"
                 else
                     echo -e "${YELLOW}Could not extract backend URL${NC}"
                 fi
@@ -106,12 +112,18 @@ if command -v curl &> /dev/null; then
                     # Update payment service to use ngrok URL for backend
                     echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
                     kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
-                    echo -e "${GREEN}✓ Payment service updated to use ngrok backend${NC}"
+                    echo -e "${GREEN}✓ Payment service environment updated${NC}"
 
                     # Update backend to know ngrok is available
                     echo -e "\n${YELLOW}Updating backend to know ngrok is available...${NC}"
                     kubectl set env deployment/backend CONNECTION_METHOD="ngrok"
-                    echo -e "${GREEN}✓ Backend updated to know ngrok is available${NC}"
+                    echo -e "${GREEN}✓ Backend environment updated${NC}"
+
+                    # Restart services to pick up new environment variables
+                    echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
+                    kubectl rollout restart deployment/payment-service
+                    kubectl rollout restart deployment/backend
+                    echo -e "${GREEN}✓ Services restarted successfully${NC}"
                 else
                     echo -e "${YELLOW}Could not extract backend URL${NC}"
                 fi

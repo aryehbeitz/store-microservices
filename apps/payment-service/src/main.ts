@@ -1,10 +1,10 @@
 import {
-    AdminConfig,
-    PaymentRequest,
-    PaymentResponse,
-    PaymentWebhook,
-    RequestLog,
-    ServiceStatus,
+  AdminConfig,
+  PaymentRequest,
+  PaymentResponse,
+  PaymentWebhook,
+  RequestLog,
+  ServiceStatus,
 } from '@honey-store/shared/types';
 import axios from 'axios';
 import cors from 'cors';
@@ -156,48 +156,52 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
     path: '/api/webhook/payment',
   };
 
-  // Check if we can send webhooks (only with ngrok)
+  // Always attempt to send webhook (will fail if ngrok not available)
   const isNgrokAvailable = CONNECTION_METHOD === 'ngrok';
 
-  if (isNgrokAvailable) {
-    // Process payment and send webhook to backend
-    const status = adminConfig.simulatePaymentError ? 'rejected' : 'approved';
-    const message = adminConfig.simulatePaymentError
-      ? 'Payment rejected due to simulated error'
-      : 'Payment approved successfully';
+  // Process payment and send webhook to backend
+  const status = adminConfig.simulatePaymentError ? 'rejected' : 'approved';
+  const message = adminConfig.simulatePaymentError
+    ? 'Payment rejected due to simulated error'
+    : 'Payment approved successfully';
 
-    const webhook: PaymentWebhook = {
-      orderId: paymentRequest.orderId,
-      paymentId: Math.random().toString(36).substring(2, 15),
-      status: status as 'approved' | 'rejected',
-      message,
-    };
+  const webhook: PaymentWebhook = {
+    orderId: paymentRequest.orderId,
+    paymentId: Math.random().toString(36).substring(2, 15),
+    status: status as 'approved' | 'rejected',
+    message,
+  };
 
-    try {
-      console.log(`Sending webhook to ${BACKEND_URL}/api/webhook/payment`);
-      console.log('Webhook payload:', webhook);
+  try {
+    console.log(`Sending webhook to ${BACKEND_URL}/api/webhook/payment`);
+    console.log('Webhook payload:', webhook);
+    console.log(`Ngrok available: ${isNgrokAvailable}`);
 
-      const response = await axios.post(`${BACKEND_URL}/api/webhook/payment`, webhook, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    const response = await axios.post(`${BACKEND_URL}/api/webhook/payment`, webhook, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-      const duration = Date.now() - startTime;
-      log.status = response.status;
-      log.duration = duration;
-      logRequest(log);
+    const duration = Date.now() - startTime;
+    log.status = response.status;
+    log.duration = duration;
+    logRequest(log);
 
-      console.log('Webhook sent successfully:', response.data);
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      log.status = 500;
-      log.duration = duration;
-      logRequest(log);
+    console.log('Webhook sent successfully:', response.data);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    log.status = 500;
+    log.duration = duration;
+    logRequest(log);
 
-      console.error('Failed to send webhook:', error);
+    console.error('Failed to send webhook:', error);
 
-      // If webhook fails, mark payment as error
+    if (!isNgrokAvailable) {
+      console.log('Webhook failed because ngrok is not available - URL is incorrect');
+      console.log('Order will remain in pending status until ngrok is available');
+    } else {
+      // If webhook fails with ngrok available, mark payment as error
       console.log('Webhook failed - marking payment as error for order:', paymentRequest.orderId);
 
       // Try to send error status to backend
@@ -227,19 +231,6 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
         // The order will remain in 'pending' status
       }
     }
-  } else {
-    // Port-forwarding mode: webhooks not available
-    console.log('Port-forwarding mode: webhooks not available, order will stay pending');
-    console.log('Order will remain in pending status until ngrok is available');
-    
-    const duration = Date.now() - startTime;
-    log.status = 200;
-    log.duration = duration;
-    logRequest(log);
-    
-    // Note: In port-forwarding mode, we can't send webhooks to update the order status
-    // The order will remain in 'pending' status until ngrok is available
-    // This demonstrates the limitation of port-forwarding for webhook delivery
   }
 }
 

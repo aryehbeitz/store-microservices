@@ -41,8 +41,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.loading = false;
 
         // Set up real-time updates if webhooks are enabled
+        this.setupRealTimeUpdates();
         if (this.realTimeUpdates) {
-          this.setupRealTimeUpdates();
         }
       },
       error: (error) => {
