@@ -1,16 +1,16 @@
-import express from 'express';
-import cors from 'cors';
-import axios from 'axios';
-import { Server } from 'socket.io';
-import { createServer } from 'http';
 import {
-  PaymentRequest,
-  PaymentResponse,
-  PaymentWebhook,
-  ServiceStatus,
-  RequestLog,
-  AdminConfig,
+    AdminConfig,
+    PaymentRequest,
+    PaymentResponse,
+    PaymentWebhook,
+    RequestLog,
+    ServiceStatus,
 } from '@honey-store/shared/types';
+import axios from 'axios';
+import cors from 'cors';
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 const app = express();
 const httpServer = createServer(app);
@@ -156,6 +156,29 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
     path: '/api/webhook/payment',
   };
 
+  // Check if we're in a port-forwarding scenario
+  // In port-forwarding, the backend service is accessible from within the cluster
+  // but the frontend can't receive real-time updates, so we should simulate webhook failure
+  const isPortForwarding = CONNECTION_METHOD === 'port-forward' || 
+                          process.env.KUBERNETES_SERVICE_HOST && 
+                          !process.env.NGROK_URL && 
+                          !process.env.TELEPRESENCE_ROOT;
+
+  if (isPortForwarding) {
+    console.log('Port-forwarding detected - simulating webhook failure to demonstrate limitation');
+    console.log('Order will remain in pending status to show webhook limitation');
+    
+    // Don't send any webhook - let the order stay pending
+    // This demonstrates the limitation of port-forwarding for webhook delivery
+    const duration = Date.now() - startTime;
+    log.status = 200;
+    log.duration = duration;
+    logRequest(log);
+    
+    console.log('Webhook not sent due to port-forwarding limitation - order remains pending');
+    return;
+  }
+
   try {
     // Determine payment status based on admin config
     const status = adminConfig.simulatePaymentError ? 'rejected' : 'approved';
@@ -195,7 +218,7 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
 
     // If webhook fails, mark payment as error instead of auto-approving
     console.log('Webhook failed - marking payment as error for order:', paymentRequest.orderId);
-    
+
     // Try to send error status to backend
     try {
       const errorWebhook: PaymentWebhook = {
@@ -208,14 +231,14 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
       // Try alternative backend URL (for port forwarding scenarios)
       const alternativeBackendUrl = process.env.ALTERNATIVE_BACKEND_URL || 'http://localhost:3000';
       console.log(`Trying alternative backend URL: ${alternativeBackendUrl}/api/webhook/payment`);
-      
+
       await axios.post(`${alternativeBackendUrl}/api/webhook/payment`, errorWebhook, {
         headers: {
           'Content-Type': 'application/json',
         },
         timeout: 5000, // 5 second timeout
       });
-      
+
       console.log('Error webhook sent successfully to alternative URL');
     } catch (altError) {
       console.error('Failed to send error webhook to alternative URL:', altError);

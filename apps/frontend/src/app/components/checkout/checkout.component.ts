@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Cart, CreateOrderRequest } from '@honey-store/shared/types';
-import { CartService } from '../../services/cart.service';
 import { ApiService } from '../../services/api.service';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-checkout',
