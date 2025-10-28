@@ -26,9 +26,14 @@ fi
 # Start cluster
 echo -e "\n${BLUE}Step 1: Starting Kubernetes cluster${NC}"
 if [ "$CLUSTER_TYPE" = "minikube" ]; then
+    # Check if minikube is running
     minikube status &> /dev/null
-    if [ $? -ne 0 ]; then
+    STATUS=$?
+
+    if [ $STATUS -ne 0 ]; then
         echo "Starting Minikube..."
+        # Try to delete if in bad state
+        minikube delete &> /dev/null
         minikube start --cpus=2 --memory=4096
     else
         echo "Minikube is already running"
