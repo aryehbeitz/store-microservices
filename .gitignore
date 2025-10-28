@@ -40,3 +40,15 @@ Thumbs.db
 
 # Nx
 .nx/cache
+
+# Downloaded binaries
+minikube-*
+k3d-*
+kubectl-*
+ngrok-*
+telepresence-*
+
+# Swap files
+*.swp
+*.swo
+*~
