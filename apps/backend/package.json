@@ -1,0 +1,11 @@
+{
+  "name": "honey-store-backend",
+  "version": "1.0.0-2025-10-28",
+  "description": "Honey Store Backend Service",
+  "main": "src/main.ts",
+  "scripts": {
+    "version:bump": "node ../../scripts/bump-version.js backend"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

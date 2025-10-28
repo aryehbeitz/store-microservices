@@ -11,6 +11,7 @@ import { CartComponent } from './components/cart/cart.component';
 import { CheckoutComponent } from './components/checkout/checkout.component';
 import { OrdersComponent } from './components/orders/orders.component';
 import { ProductListComponent } from './components/product-list/product-list.component';
+import { VersionNotificationComponent } from './components/version-notification/version-notification.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +21,7 @@ import { ProductListComponent } from './components/product-list/product-list.com
     CheckoutComponent,
     AdminDashboardComponent,
     OrdersComponent,
+    VersionNotificationComponent,
   ],
   imports: [
     BrowserModule,

@@ -430,6 +430,52 @@ app.post('/api/orders/:id/retry-payment', async (req, res) => {
   }
 });
 
+// Clear all orders
+app.delete('/api/orders', async (req, res) => {
+  const startTime = Date.now();
+  const log: RequestLog = {
+    id: Math.random().toString(36),
+    timestamp: new Date(),
+    source: 'frontend',
+    destination: 'backend',
+    method: 'DELETE',
+    path: '/api/orders',
+  };
+
+  try {
+    const result = await OrderModel.deleteMany({});
+    const duration = Date.now() - startTime;
+
+    log.status = 200;
+    log.duration = duration;
+    logRequest(log);
+
+    res.json({
+      message: 'All orders cleared successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    log.status = 500;
+    log.duration = duration;
+    logRequest(log);
+
+    res.status(500).json({ error: 'Failed to clear orders' });
+  }
+});
+
+// Version update endpoint for watch script
+app.post('/api/version-update', (req, res) => {
+  const { service, version } = req.body;
+  
+  console.log(`Version update received: ${service} → ${version}`);
+  
+  // Emit version update event to all connected clients
+  io.emit('version-update', { service, version });
+  
+  res.json({ message: 'Version update broadcasted' });
+});
+
 // Start server
 httpServer.listen(PORT, () => {
   console.log(`Backend service listening on port ${PORT}`);

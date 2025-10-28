@@ -31,24 +31,24 @@
   <div class="product-grid">
     <div class="product-card" *ngFor="let product of products">
       <div class="product-image">
-        <img [src]="product.imageUrl" [alt]="product.name" />
-        <span class="badge" [class.out-of-stock]="!product.inStock">
-          {{ product.inStock ? 'In Stock' : 'Out of Stock' }}
+        <img [src]="product?.imageUrl" [alt]="product?.name" />
+        <span class="badge" [class.out-of-stock]="!product?.inStock">
+          {{ product?.inStock ? 'In Stock' : 'Out of Stock' }}
         </span>
       </div>
       <div class="product-info">
-        <h3>{{ product.name }}</h3>
-        <p class="category">{{ product.category | titlecase }}</p>
-        <p class="description">{{ product.description }}</p>
+        <h3>{{ product?.name }}</h3>
+        <p class="category">{{ product?.category | titlecase }}</p>
+        <p class="description">{{ product?.description }}</p>
         <div class="product-footer">
-          <span class="price">${{ product.price.toFixed(2) }}</span>
+          <span class="price">${{ (product?.price || 0).toFixed(2) }}</span>
           <button
             class="add-to-cart-btn"
             (click)="addToCart(product)"
-            [disabled]="!product.inStock"
-            [class.added]="addedToCartId === product.id"
+            [disabled]="!product?.inStock"
+            [class.added]="addedToCartId === product?.id"
           >
-            {{ addedToCartId === product.id ? '✓ Added' : 'Add to Cart' }}
+            {{ addedToCartId === product?.id ? '✓ Added' : 'Add to Cart' }}
           </button>
         </div>
       </div>

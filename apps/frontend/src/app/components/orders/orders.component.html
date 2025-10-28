@@ -22,6 +22,16 @@
           ✅ Orders update in real-time via webhooks
         </div>
       </div>
+      <div class="header-right">
+        <button
+          *ngIf="orders.length > 0"
+          class="clear-all-btn"
+          (click)="clearAllOrders()"
+          [disabled]="loading"
+        >
+          🗑️ Clear All Orders
+        </button>
+      </div>
     </div>
   </div>
 
@@ -43,14 +53,14 @@
     <div *ngFor="let order of orders" class="order-card">
       <div class="order-header">
         <div class="order-info">
-          <h3>Order #{{ order.id }}</h3>
-          <p class="order-date">{{ formatDate(order.createdAt) }}</p>
+          <h3>Order #{{ order?._id }}</h3>
+          <p class="order-date">{{ order?.createdAt ? formatDate(order.createdAt) : 'Unknown' }}</p>
         </div>
         <div class="order-status">
-          <span class="status-badge" [ngClass]="getStatusClass(order.paymentStatus)">
-            {{ getStatusText(order.paymentStatus) }}
+          <span class="status-badge" [ngClass]="getStatusClass(order?.paymentStatus || '')">
+            {{ getStatusText(order?.paymentStatus || '') }}
           </span>
-          <div *ngIf="!realTimeUpdates && order.paymentStatus === 'pending'" class="pending-note">
+          <div *ngIf="!realTimeUpdates && order?.paymentStatus === 'pending'" class="pending-note">
             <small>⚠️ Status may not update automatically</small>
           </div>
         </div>
@@ -59,43 +69,43 @@
       <div class="order-details">
         <div class="customer-info">
           <h4>Customer Information</h4>
-          <p><strong>Name:</strong> {{ order.customerName }}</p>
-          <p><strong>Email:</strong> {{ order.customerEmail }}</p>
-          <p><strong>Shipping Address:</strong> {{ order.shippingAddress }}</p>
+          <p><strong>Name:</strong> {{ order?.customerName }}</p>
+          <p><strong>Email:</strong> {{ order?.customerEmail }}</p>
+          <p><strong>Shipping Address:</strong> {{ order?.shippingAddress }}</p>
         </div>
 
         <div class="order-items">
-          <h4>Items ({{ order.items.length }})</h4>
+          <h4>Items ({{ order?.items?.length || 0 }})</h4>
           <div class="items-list">
-            <div *ngFor="let item of order.items" class="item">
+            <div *ngFor="let item of order?.items" class="item">
               <div class="item-image">
-                <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+                <img [src]="item?.product?.imageUrl" [alt]="item?.product?.name" />
               </div>
               <div class="item-details">
-                <h5>{{ item.product.name }}</h5>
-                <p class="item-category">{{ item.product.category }}</p>
-                <p class="item-quantity">Quantity: {{ item.quantity }}</p>
-                <p class="item-price">${{ (item.product.price * item.quantity).toFixed(2) }}</p>
+                <h5>{{ item?.product?.name }}</h5>
+                <p class="item-category">{{ item?.product?.category }}</p>
+                <p class="item-quantity">Quantity: {{ item?.quantity }}</p>
+                <p class="item-price">${{ ((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2) }}</p>
               </div>
             </div>
           </div>
         </div>
 
         <div class="order-total">
-          <h4>Total: ${{ order.total.toFixed(2) }}</h4>
+          <h4>Total: ${{ (order?.total || 0).toFixed(2) }}</h4>
         </div>
       </div>
 
       <div class="order-actions">
         <button
-          *ngIf="canRetryPayment(order.paymentStatus)"
+          *ngIf="canRetryPayment(order?.paymentStatus || '')"
           class="retry-payment-btn"
-          (click)="retryPayment(order.id)"
-          [disabled]="retryingPayment[order.id]"
+          (click)="retryPayment(order?._id || '')"
+          [disabled]="order?._id ? retryingPayment[order._id] : false"
         >
-          <span *ngIf="retryingPayment[order.id]">⟳</span>
-          <span *ngIf="!retryingPayment[order.id]">↻</span>
-          {{ retryingPayment[order.id] ? 'Retrying...' : 'Retry Payment' }}
+          <span *ngIf="order?._id && retryingPayment[order._id]">⟳</span>
+          <span *ngIf="!order?._id || !retryingPayment[order._id]">↻</span>
+          {{ (order?._id && retryingPayment[order._id]) ? 'Retrying...' : 'Retry Payment' }}
         </button>
       </div>
     </div>

@@ -71,6 +71,24 @@ export class OrdersComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearAllOrders(): void {
+    if (confirm('Are you sure you want to clear all orders? This action cannot be undone.')) {
+      this.loading = true;
+      this.apiService.clearAllOrders().subscribe({
+        next: (response) => {
+          console.log('Clear all orders response:', response);
+          this.orders = [];
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error clearing orders:', error);
+          this.loading = false;
+          this.error = 'Failed to clear orders. Please try again.';
+        }
+      });
+    }
+  }
+
   getStatusClass(status: string): string {
     switch (status) {
       case 'approved':
@@ -165,7 +183,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   private updateOrderInList(updatedOrder: Order): void {
-    const index = this.orders.findIndex(order => order.id === updatedOrder.id);
+    const index = this.orders.findIndex(order => order._id === updatedOrder._id);
     if (index !== -1) {
       this.orders[index] = updatedOrder;
     }

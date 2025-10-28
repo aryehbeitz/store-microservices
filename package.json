@@ -14,7 +14,11 @@
     "build-and-deploy": "./scripts/build-and-deploy.sh",
     "port-forward": "./scripts/port-forward.sh",
     "ngrok:start": "./scripts/ngrok-start.sh",
-    "telepresence:start": "./scripts/telepresence-start.sh"
+    "telepresence:start": "./scripts/telepresence-start.sh",
+    "version:frontend": "cd apps/frontend && npm run version:bump",
+    "version:backend": "cd apps/backend && npm run version:bump",
+    "version:payment": "cd apps/payment-service && npm run version:bump",
+    "watch": "./scripts/watch.sh"
   },
   "private": true,
   "dependencies": {

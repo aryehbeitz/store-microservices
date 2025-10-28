@@ -17,6 +17,31 @@
   flex: 1;
 }
 
+.header-right {
+  margin-left: 2rem;
+}
+
+.clear-all-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.clear-all-btn:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.clear-all-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
 .orders-header h1 {
   color: #d4af37;
   margin: 0;

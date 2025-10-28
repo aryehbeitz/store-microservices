@@ -22,7 +22,7 @@ export interface Cart {
 
 // Order Types
 export interface Order {
-  id: string;
+  _id: string;
   items: CartItem[];
   total: number;
   customerName: string;

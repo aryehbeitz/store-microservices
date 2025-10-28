@@ -41,4 +41,10 @@ export class ApiService {
       {}
     );
   }
+
+  clearAllOrders(): Observable<{ message: string; deletedCount: number }> {
+    return this.http.delete<{ message: string; deletedCount: number }>(
+      `${this.backendUrl}/api/orders`
+    );
+  }
 }
