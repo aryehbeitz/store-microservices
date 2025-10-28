@@ -156,28 +156,11 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
     path: '/api/webhook/payment',
   };
 
-  // Check if we're in a port-forwarding scenario (no ngrok)
-  // In port-forwarding, orders should stay pending until ngrok is available
-  const isPortForwarding = CONNECTION_METHOD === 'port-forward';
+  // Check if we can send webhooks (only with ngrok)
   const isNgrokAvailable = CONNECTION_METHOD === 'ngrok';
 
-  if (isPortForwarding && !isNgrokAvailable) {
-    console.log('Port-forwarding only detected - keeping order pending until ngrok is available');
-    console.log('Order will remain in pending status to demonstrate webhook limitation');
-
-    // Don't send any webhook - let the order stay pending
-    // This demonstrates the limitation of port-forwarding for webhook delivery
-    const duration = Date.now() - startTime;
-    log.status = 200;
-    log.duration = duration;
-    logRequest(log);
-
-    console.log('Webhook not sent due to port-forwarding limitation - order remains pending');
-    return;
-  }
-
-  try {
-    // Determine payment status based on admin config
+  if (isNgrokAvailable) {
+    // Process payment and send webhook to backend
     const status = adminConfig.simulatePaymentError ? 'rejected' : 'approved';
     const message = adminConfig.simulatePaymentError
       ? 'Payment rejected due to simulated error'
@@ -190,58 +173,73 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
       message,
     };
 
-    console.log(`Sending webhook to ${BACKEND_URL}/api/webhook/payment`);
-    console.log('Webhook payload:', webhook);
-
-    const response = await axios.post(`${BACKEND_URL}/api/webhook/payment`, webhook, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const duration = Date.now() - startTime;
-    log.status = response.status;
-    log.duration = duration;
-    logRequest(log);
-
-    console.log('Webhook sent successfully:', response.data);
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    log.status = 500;
-    log.duration = duration;
-    logRequest(log);
-
-    console.error('Failed to send webhook:', error);
-
-    // If webhook fails, mark payment as error instead of auto-approving
-    console.log('Webhook failed - marking payment as error for order:', paymentRequest.orderId);
-
-    // Try to send error status to backend
     try {
-      const errorWebhook: PaymentWebhook = {
-        orderId: paymentRequest.orderId,
-        paymentId: Math.random().toString(36).substring(2, 15),
-        status: 'error',
-        message: 'Payment processing failed - webhook could not be delivered',
-      };
+      console.log(`Sending webhook to ${BACKEND_URL}/api/webhook/payment`);
+      console.log('Webhook payload:', webhook);
 
-      // Try alternative backend URL (for port forwarding scenarios)
-      const alternativeBackendUrl = process.env.ALTERNATIVE_BACKEND_URL || 'http://localhost:3000';
-      console.log(`Trying alternative backend URL: ${alternativeBackendUrl}/api/webhook/payment`);
-
-      await axios.post(`${alternativeBackendUrl}/api/webhook/payment`, errorWebhook, {
+      const response = await axios.post(`${BACKEND_URL}/api/webhook/payment`, webhook, {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 5000, // 5 second timeout
       });
 
-      console.log('Error webhook sent successfully to alternative URL');
-    } catch (altError) {
-      console.error('Failed to send error webhook to alternative URL:', altError);
-      // If both webhook attempts fail, we can't update the order status
-      // The order will remain in 'pending' status
+      const duration = Date.now() - startTime;
+      log.status = response.status;
+      log.duration = duration;
+      logRequest(log);
+
+      console.log('Webhook sent successfully:', response.data);
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      log.status = 500;
+      log.duration = duration;
+      logRequest(log);
+
+      console.error('Failed to send webhook:', error);
+
+      // If webhook fails, mark payment as error
+      console.log('Webhook failed - marking payment as error for order:', paymentRequest.orderId);
+
+      // Try to send error status to backend
+      try {
+        const errorWebhook: PaymentWebhook = {
+          orderId: paymentRequest.orderId,
+          paymentId: Math.random().toString(36).substring(2, 15),
+          status: 'error',
+          message: 'Payment processing failed - webhook could not be delivered',
+        };
+
+        // Try alternative backend URL (for port forwarding scenarios)
+        const alternativeBackendUrl = process.env.ALTERNATIVE_BACKEND_URL || 'http://localhost:3000';
+        console.log(`Trying alternative backend URL: ${alternativeBackendUrl}/api/webhook/payment`);
+
+        await axios.post(`${alternativeBackendUrl}/api/webhook/payment`, errorWebhook, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 5000, // 5 second timeout
+        });
+
+        console.log('Error webhook sent successfully to alternative URL');
+      } catch (altError) {
+        console.error('Failed to send error webhook to alternative URL:', altError);
+        // If both webhook attempts fail, we can't update the order status
+        // The order will remain in 'pending' status
+      }
     }
+  } else {
+    // Port-forwarding mode: webhooks not available
+    console.log('Port-forwarding mode: webhooks not available, order will stay pending');
+    console.log('Order will remain in pending status until ngrok is available');
+    
+    const duration = Date.now() - startTime;
+    log.status = 200;
+    log.duration = duration;
+    logRequest(log);
+    
+    // Note: In port-forwarding mode, we can't send webhooks to update the order status
+    // The order will remain in 'pending' status until ngrok is available
+    // This demonstrates the limitation of port-forwarding for webhook delivery
   }
 }
 
