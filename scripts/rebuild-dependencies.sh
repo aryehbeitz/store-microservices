@@ -53,14 +53,22 @@ fi
 
 # Build Docker images
 echo -e "\n${BLUE}Step 2: Building Docker images${NC}"
+
+# Generate unique timestamp for image tags
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+echo "Using timestamp: $TIMESTAMP"
+
 echo "Building backend..."
-docker build -t honey-store/backend:latest -f apps/backend/Dockerfile .
+docker build -t honey-store/backend:$TIMESTAMP -t honey-store/backend:latest -f apps/backend/Dockerfile .
 
 echo "Building payment service..."
-docker build -t honey-store/payment-service:latest -f apps/payment-service/Dockerfile .
+docker build -t honey-store/payment-service:$TIMESTAMP -t honey-store/payment-service:latest -f apps/payment-service/Dockerfile .
 
 echo "Building frontend..."
-docker build -t honey-store/frontend:latest -f apps/frontend/Dockerfile .
+docker build -t honey-store/frontend:$TIMESTAMP -t honey-store/frontend:latest -f apps/frontend/Dockerfile .
+
+# Store timestamp for deploy script
+echo "$TIMESTAMP" > .docker-timestamp
 
 echo -e "\n${GREEN}✓ Kubernetes cluster ready and images built${NC}"
 echo -e "${YELLOW}Next steps:${NC}"

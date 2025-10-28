@@ -44,6 +44,9 @@ Thumbs.db
 # Angular
 .angular
 
+# Docker build artifacts
+.docker-timestamp
+
 # Downloaded binaries
 minikube-*
 k3d-*
