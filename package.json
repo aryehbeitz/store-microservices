@@ -18,6 +18,7 @@
     "version:frontend": "cd apps/frontend && npm run version:bump",
     "version:backend": "cd apps/backend && npm run version:bump",
     "version:payment": "cd apps/payment-service && npm run version:bump",
+    "version:all": "npm run version:frontend && npm run version:backend && npm run version:payment",
     "watch": "./scripts/watch.sh"
   },
   "private": true,
