@@ -79,15 +79,14 @@ show_notification() {
 }
 
 # Initialize version tracking
-declare -A versions
-versions[frontend]=$(get_version frontend)
-versions[backend]=$(get_version backend)
-versions[payment-service]=$(get_version payment-service)
+frontend_version=$(get_version frontend)
+backend_version=$(get_version backend)
+payment_version=$(get_version payment-service)
 
 echo -e "${YELLOW}Initial versions:${NC}"
-echo -e "  Frontend: ${versions[frontend]}"
-echo -e "  Backend: ${versions[backend]}"
-echo -e "  Payment Service: ${versions[payment-service]}"
+echo -e "  Frontend: ${frontend_version}"
+echo -e "  Backend: ${backend_version}"
+echo -e "  Payment Service: ${payment_version}"
 echo -e "\n${YELLOW}Watching for version changes...${NC}"
 echo -e "${YELLOW}Use 'npm run version:<service>' to bump versions${NC}\n"
 
@@ -95,23 +94,33 @@ echo -e "${YELLOW}Use 'npm run version:<service>' to bump versions${NC}\n"
 while true; do
     sleep 2
 
-    # Check each service for version changes
-    for service in frontend backend payment-service; do
-        current_version=$(get_version $service)
+    # Check frontend for version changes
+    current_frontend=$(get_version frontend)
+    if [ "$current_frontend" != "$frontend_version" ] && [ "$current_frontend" != "unknown" ]; then
+        echo -e "${GREEN}🚀 Version change detected for frontend: $frontend_version → $current_frontend${NC}"
+        frontend_version=$current_frontend
+        deploy_service frontend
+        show_notification frontend $current_frontend
+        echo -e "${YELLOW}Continuing to watch...${NC}\n"
+    fi
 
-        if [ "$current_version" != "${versions[$service]}" ] && [ "$current_version" != "unknown" ]; then
-            echo -e "${GREEN}🚀 Version change detected for $service: ${versions[$service]} → $current_version${NC}"
+    # Check backend for version changes
+    current_backend=$(get_version backend)
+    if [ "$current_backend" != "$backend_version" ] && [ "$current_backend" != "unknown" ]; then
+        echo -e "${GREEN}🚀 Version change detected for backend: $backend_version → $current_backend${NC}"
+        backend_version=$current_backend
+        deploy_service backend
+        show_notification backend $current_backend
+        echo -e "${YELLOW}Continuing to watch...${NC}\n"
+    fi
 
-            # Update stored version
-            versions[$service]=$current_version
-
-            # Deploy the service
-            deploy_service $service
-
-            # Show notification
-            show_notification $service $current_version
-
-            echo -e "${YELLOW}Continuing to watch...${NC}\n"
-        fi
-    done
+    # Check payment-service for version changes
+    current_payment=$(get_version payment-service)
+    if [ "$current_payment" != "$payment_version" ] && [ "$current_payment" != "unknown" ]; then
+        echo -e "${GREEN}🚀 Version change detected for payment-service: $payment_version → $current_payment${NC}"
+        payment_version=$current_payment
+        deploy_service payment-service
+        show_notification payment-service $current_payment
+        echo -e "${YELLOW}Continuing to watch...${NC}\n"
+    fi
 done
