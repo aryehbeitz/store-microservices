@@ -1,0 +1,72 @@
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Cart, CreateOrderRequest } from '@honey-store/shared/types';
+import { CartService } from '../../services/cart.service';
+import { ApiService } from '../../services/api.service';
+
+@Component({
+  selector: 'app-checkout',
+  templateUrl: './checkout.component.html',
+  styleUrls: ['./checkout.component.css'],
+})
+export class CheckoutComponent implements OnInit {
+  checkoutForm: FormGroup;
+  cart: Cart = { items: [], total: 0 };
+  isSubmitting = false;
+  orderPlaced = false;
+  orderId: string | null = null;
+
+  constructor(
+    private fb: FormBuilder,
+    private cartService: CartService,
+    private apiService: ApiService,
+    private router: Router
+  ) {
+    this.checkoutForm = this.fb.group({
+      customerName: ['', [Validators.required, Validators.minLength(2)]],
+      customerEmail: ['', [Validators.required, Validators.email]],
+      shippingAddress: ['', [Validators.required, Validators.minLength(10)]],
+    });
+  }
+
+  ngOnInit() {
+    this.cartService.cart$.subscribe((cart) => {
+      this.cart = cart;
+      if (cart.items.length === 0 && !this.orderPlaced) {
+        this.router.navigate(['/cart']);
+      }
+    });
+  }
+
+  async onSubmit() {
+    if (this.checkoutForm.valid && !this.isSubmitting) {
+      this.isSubmitting = true;
+
+      const orderData: CreateOrderRequest = {
+        items: this.cart.items,
+        total: this.cart.total,
+        customerName: this.checkoutForm.value.customerName,
+        customerEmail: this.checkoutForm.value.customerEmail,
+        shippingAddress: this.checkoutForm.value.shippingAddress,
+      };
+
+      this.apiService.createOrder(orderData).subscribe({
+        next: (response) => {
+          console.log('Order created:', response);
+          this.orderId = response.orderId;
+          this.orderPlaced = true;
+          this.cartService.clearCart();
+          setTimeout(() => {
+            this.router.navigate(['/']);
+          }, 5000);
+        },
+        error: (error) => {
+          console.error('Error creating order:', error);
+          this.isSubmitting = false;
+          alert('Failed to place order. Please try again.');
+        },
+      });
+    }
+  }
+}

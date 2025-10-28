@@ -1,0 +1,256 @@
+<div class="admin-dashboard">
+  <h2>🔧 Admin Monitoring Dashboard</h2>
+
+  <div class="dashboard-grid">
+    <!-- Service Architecture Visualization -->
+    <div class="visualization-panel">
+      <h3>Service Architecture</h3>
+      <svg class="architecture-diagram" viewBox="0 0 800 500">
+        <!-- Frontend -->
+        <g class="service-node" transform="translate(100, 250)">
+          <circle
+            r="40"
+            [attr.fill]="'#61dafb'"
+            [attr.stroke]="'#333'"
+            stroke-width="3"
+          />
+          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold">
+            Frontend
+          </text>
+          <text text-anchor="middle" dy="60" fill="#333" font-size="12">
+            Angular
+          </text>
+          <text text-anchor="middle" dy="75" fill="#666" font-size="10">
+            Browser
+          </text>
+        </g>
+
+        <!-- Backend -->
+        <g class="service-node" transform="translate(400, 250)">
+          <circle
+            r="50"
+            [attr.fill]="getServiceColor(services['backend'])"
+            [attr.stroke]="'#333'"
+            stroke-width="3"
+            [class.pulse]="services['backend'].enabled"
+          />
+          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold">
+            Backend
+          </text>
+          <text text-anchor="middle" dy="70" fill="#333" font-size="12">
+            {{ services['backend'].location }}
+          </text>
+          <text text-anchor="middle" dy="85" fill="#666" font-size="10">
+            {{ getConnectionMethodLabel(services['backend'].connectionMethod) }}
+          </text>
+          <text text-anchor="middle" dy="-65" [attr.fill]="services['backend'].healthy ? '#4caf50' : '#f44336'" font-size="14" font-weight="bold">
+            {{ services['backend'].enabled ? (services['backend'].healthy ? '✓' : '✗') : '○' }}
+          </text>
+        </g>
+
+        <!-- Payment Service -->
+        <g class="service-node" transform="translate(700, 250)">
+          <circle
+            r="50"
+            [attr.fill]="getServiceColor(services['payment-service'])"
+            [attr.stroke]="'#333'"
+            stroke-width="3"
+            [class.pulse]="services['payment-service'].enabled"
+          />
+          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold" font-size="14">
+            Payment
+          </text>
+          <text text-anchor="middle" dy="70" fill="#333" font-size="12">
+            {{ services['payment-service'].location }}
+          </text>
+          <text text-anchor="middle" dy="85" fill="#666" font-size="10">
+            {{ getConnectionMethodLabel(services['payment-service'].connectionMethod) }}
+          </text>
+          <text text-anchor="middle" dy="-65" [attr.fill]="services['payment-service'].healthy ? '#4caf50' : '#f44336'" font-size="14" font-weight="bold">
+            {{ services['payment-service'].enabled ? (services['payment-service'].healthy ? '✓' : '✗') : '○' }}
+          </text>
+        </g>
+
+        <!-- MongoDB -->
+        <g class="service-node" transform="translate(400, 400)">
+          <rect
+            x="-40"
+            y="-30"
+            width="80"
+            height="60"
+            rx="5"
+            fill="#47a248"
+            stroke="#333"
+            stroke-width="2"
+          />
+          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold">
+            MongoDB
+          </text>
+        </g>
+
+        <!-- Static Connections -->
+        <line
+          x1="140"
+          y1="250"
+          x2="350"
+          y2="250"
+          stroke="#999"
+          stroke-width="2"
+          stroke-dasharray="5,5"
+        />
+        <line
+          x1="450"
+          y1="250"
+          x2="650"
+          y2="250"
+          stroke="#999"
+          stroke-width="2"
+          stroke-dasharray="5,5"
+        />
+        <line
+          x1="400"
+          y1="300"
+          x2="400"
+          y2="370"
+          stroke="#999"
+          stroke-width="2"
+          stroke-dasharray="5,5"
+        />
+
+        <!-- Animated Request Flows -->
+        <g *ngFor="let log of activeRequests | keyvalue">
+          <line
+            [attr.x1]="log.value.source === 'frontend' ? 140 : (log.value.source === 'backend' ? 450 : 650)"
+            [attr.y1]="250"
+            [attr.x2]="log.value.destination === 'backend' ? 350 : (log.value.destination === 'payment-service' ? 650 : 450)"
+            [attr.y2]="250"
+            [attr.stroke]="log.value.status && log.value.status >= 400 ? '#f44336' : '#4caf50'"
+            stroke-width="4"
+            class="request-flow"
+          >
+            <animate
+              attributeName="stroke-opacity"
+              from="1"
+              to="0"
+              dur="2s"
+              repeatCount="1"
+            />
+          </line>
+          <circle
+            [attr.cx]="log.value.source === 'frontend' ? 140 : (log.value.source === 'backend' ? 450 : 650)"
+            [attr.cy]="250"
+            r="8"
+            [attr.fill]="log.value.status && log.value.status >= 400 ? '#f44336' : '#4caf50'"
+            class="request-dot"
+          >
+            <animateMotion
+              [attr.path]="'M 0 0 L ' + ((log.value.destination === 'backend' ? 350 : (log.value.destination === 'payment-service' ? 650 : 450)) - (log.value.source === 'frontend' ? 140 : (log.value.source === 'backend' ? 450 : 650))) + ' 0'"
+              dur="2s"
+              repeatCount="1"
+            />
+            <animate
+              attributeName="opacity"
+              from="1"
+              to="0"
+              dur="2s"
+              repeatCount="1"
+            />
+          </circle>
+        </g>
+      </svg>
+
+      <div class="legend">
+        <h4>Connection Methods:</h4>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-color" style="background: #4caf50"></div>
+            <span>Direct</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #2196f3"></div>
+            <span>Port Forward</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #9c27b0"></div>
+            <span>Ngrok</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #ff9800"></div>
+            <span>Telepresence</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #999"></div>
+            <span>Disabled</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel">
+      <h3>Configuration</h3>
+
+      <div class="control-group">
+        <label class="toggle-label">
+          <input
+            type="checkbox"
+            [checked]="adminConfig.simulatePaymentError"
+            (change)="togglePaymentError()"
+          />
+          <span>Simulate Payment Error</span>
+        </label>
+      </div>
+
+      <div class="control-group">
+        <label>Payment Delay (ms):</label>
+        <input
+          type="range"
+          min="500"
+          max="5000"
+          step="500"
+          [value]="adminConfig.paymentDelayMs"
+          (input)="updatePaymentDelay($event)"
+        />
+        <span class="value-display">{{ adminConfig.paymentDelayMs }}ms</span>
+      </div>
+
+      <div class="service-status-list">
+        <h4>Service Status:</h4>
+        <div class="status-item" *ngFor="let service of services | keyvalue">
+          <div
+            class="status-indicator"
+            [style.background]="service.value.enabled ? (service.value.healthy ? '#4caf50' : '#f44336') : '#999'"
+          ></div>
+          <div class="status-info">
+            <strong>{{ service.value.name }}</strong>
+            <span>{{ service.value.enabled ? (service.value.healthy ? 'Healthy' : 'Unhealthy') : 'Disabled' }}</span>
+            <span class="location-badge">{{ service.value.location }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request Logs -->
+    <div class="logs-panel">
+      <h3>Request Logs</h3>
+      <div class="logs-container">
+        <div class="log-entry" *ngFor="let log of requestLogs">
+          <div class="log-header">
+            <span class="log-method" [class.error]="log.status && log.status >= 400">{{ log.method }}</span>
+            <span class="log-path">{{ log.path }}</span>
+            <span class="log-status" [class.error]="log.status && log.status >= 400">
+              {{ log.status || 'pending' }}
+            </span>
+          </div>
+          <div class="log-flow">
+            <span class="flow-source">{{ log.source }}</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-destination">{{ log.destination }}</span>
+            <span class="log-duration" *ngIf="log.duration">{{ log.duration }}ms</span>
+          </div>
+          <div class="log-timestamp">{{ log.timestamp | date:'HH:mm:ss.SSS' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

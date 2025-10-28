@@ -1,0 +1,19 @@
+<header>
+  <nav>
+    <div class="logo">
+      <h1>🍯 {{ title }}</h1>
+    </div>
+    <ul class="nav-links">
+      <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Products</a></li>
+      <li><a routerLink="/cart" routerLinkActive="active">Cart ({{ cartItemCount }})</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <router-outlet></router-outlet>
+</main>
+
+<footer>
+  <p>&copy; 2025 Honey Store. All rights reserved.</p>
+</footer>

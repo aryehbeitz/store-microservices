@@ -1,0 +1,37 @@
+{
+  "name": "backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/node:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/backend",
+        "main": "apps/backend/src/main.ts",
+        "tsConfig": "apps/backend/tsconfig.app.json",
+        "assets": []
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/node:node",
+      "options": {
+        "buildTarget": "backend:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "backend:build:production"
+        }
+      }
+    }
+  },
+  "tags": ["type:app", "scope:backend"]
+}
