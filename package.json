@@ -11,8 +11,8 @@
     "build:status": "nx show projects --affected --type=app",
     "test": "nx affected --target=test --parallel=3 --base=master",
     "test:all": "nx run-many --target=test --all --parallel=3",
-    "k8s:start": "./scripts/k8s-start.sh",
-    "k8s:deploy": "./scripts/k8s-deploy.sh",
+    "rebuild": "./scripts/rebuild-dependencies.sh",
+    "deploy": "./scripts/deploy-changes.sh",
     "port-forward": "./scripts/port-forward.sh",
     "ngrok:start": "./scripts/ngrok-start.sh",
     "telepresence:start": "./scripts/telepresence-start.sh"

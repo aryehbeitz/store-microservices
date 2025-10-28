@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}======================================${NC}"
-echo -e "${BLUE}  Honey Store - Kubernetes Setup     ${NC}"
+echo -e "${BLUE}  Honey Store - Rebuild Dependencies ${NC}"
 echo -e "${BLUE}======================================${NC}\n"
 
 # Check if minikube or k3d is available
@@ -64,5 +64,5 @@ docker build -t honey-store/frontend:latest -f apps/frontend/Dockerfile .
 
 echo -e "\n${GREEN}✓ Kubernetes cluster ready and images built${NC}"
 echo -e "${YELLOW}Next steps:${NC}"
-echo "  1. Run './scripts/k8s-deploy.sh' to deploy the services"
+echo "  1. Run './scripts/deploy-changes.sh' to deploy the services"
 echo "  2. Run './scripts/port-forward.sh' to access the services locally"

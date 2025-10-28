@@ -275,7 +275,7 @@ npx nx show projects
 ### Step 1: Start Kubernetes and Build Images
 
 ```bash
-./scripts/k8s-start.sh
+./scripts/rebuild-dependencies.sh
 ```
 
 This script will:
@@ -297,14 +297,14 @@ Starting Minikube...
 ✓ Kubernetes cluster ready and images built
 
 Next steps:
-  1. Run './scripts/k8s-deploy.sh' to deploy the services
+  1. Run './scripts/deploy-changes.sh' to deploy the services
   2. Run './scripts/port-forward.sh' to access the services locally
 ```
 
 ### Step 2: Deploy to Kubernetes
 
 ```bash
-./scripts/k8s-deploy.sh
+./scripts/deploy-changes.sh
 ```
 
 This script will:
@@ -559,7 +559,7 @@ minikube start --cpus=4 --memory=4096
 eval $(minikube docker-env)
 
 # Rebuild images
-./scripts/k8s-start.sh
+./scripts/rebuild-dependencies.sh
 ```
 
 ### Issue: Port already in use

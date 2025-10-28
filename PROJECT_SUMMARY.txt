@@ -96,8 +96,8 @@
 🚀 QUICK START COMMANDS
 ------------------------
 1. npm install
-2. ./scripts/k8s-start.sh
-3. ./scripts/k8s-deploy.sh
+2. ./scripts/rebuild-dependencies.sh
+3. ./scripts/deploy-changes.sh
 4. ./scripts/port-forward.sh
 5. Open: http://localhost:8080
 

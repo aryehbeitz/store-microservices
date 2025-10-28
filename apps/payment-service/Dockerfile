@@ -12,7 +12,7 @@ COPY apps/payment-service ./apps/payment-service
 COPY libs ./libs
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Build the application
 RUN npx nx build payment-service

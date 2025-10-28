@@ -54,7 +54,7 @@ npm install
 ### 2. Start Kubernetes Cluster
 
 ```bash
-./scripts/k8s-start.sh
+./scripts/rebuild-dependencies.sh
 ```
 
 This will:
@@ -65,7 +65,7 @@ This will:
 ### 3. Deploy Services
 
 ```bash
-./scripts/k8s-deploy.sh
+./scripts/deploy-changes.sh
 ```
 
 This will deploy:
@@ -140,8 +140,8 @@ For testing with Kubernetes but local access:
 
 ```bash
 # Deploy to Kubernetes
-./scripts/k8s-start.sh
-./scripts/k8s-deploy.sh
+./scripts/rebuild-dependencies.sh
+./scripts/deploy-changes.sh
 
 # Access via port forwarding
 ./scripts/port-forward.sh
@@ -162,8 +162,8 @@ For debugging with Kubernetes + local services:
 
 ```bash
 # Deploy to Kubernetes
-./scripts/k8s-start.sh
-./scripts/k8s-deploy.sh
+./scripts/rebuild-dependencies.sh
+./scripts/deploy-changes.sh
 
 # Connect with Telepresence
 ./scripts/telepresence-start.sh
@@ -189,8 +189,8 @@ For testing webhooks and sharing with others:
 
 ```bash
 # Deploy to Kubernetes
-./scripts/k8s-start.sh
-./scripts/k8s-deploy.sh
+./scripts/rebuild-dependencies.sh
+./scripts/deploy-changes.sh
 
 # Create public tunnels
 ./scripts/ngrok-start.sh
@@ -288,8 +288,8 @@ store-microservices/
 │   ├── payment-service-deployment.yaml
 │   └── frontend-deployment.yaml
 ├── scripts/                   # Automation scripts
-│   ├── k8s-start.sh          # Start cluster and build images
-│   ├── k8s-deploy.sh         # Deploy to Kubernetes
+│   ├── rebuild-dependencies.sh # Rebuild dependencies and build images
+│   ├── deploy-changes.sh     # Deploy changes to Kubernetes
 │   ├── port-forward.sh       # Set up port forwarding
 │   ├── ngrok-start.sh        # Create ngrok tunnels
 │   └── telepresence-start.sh # Connect with telepresence

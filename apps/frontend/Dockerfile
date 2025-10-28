@@ -12,7 +12,7 @@ COPY apps/frontend ./apps/frontend
 COPY libs ./libs
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Build the application
 RUN npx nx build frontend --configuration=production
