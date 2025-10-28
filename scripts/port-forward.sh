@@ -35,7 +35,24 @@ start_port_forward() {
         sleep 1
     fi
 
-    kubectl port-forward service/$service $port:$port > /dev/null 2>&1 &
+    # Get the target port from the service
+    local target_port
+    case $service in
+        "frontend")
+            target_port=80
+            ;;
+        "backend")
+            target_port=3000
+            ;;
+        "payment-service")
+            target_port=3002
+            ;;
+        *)
+            target_port=$port
+            ;;
+    esac
+
+    kubectl port-forward service/$service $port:$target_port > /dev/null 2>&1 &
     local pid=$!
 
     sleep 2

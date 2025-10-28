@@ -3,14 +3,50 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     },
     "lint": {
-      "cache": true
+      "cache": true,
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore"
+      ]
     },
     "test": {
-      "cache": true
+      "cache": true,
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js"
+      ]
     }
   },
-  "defaultProject": "frontend"
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/**/*.stories.ts",
+      "!{projectRoot}/**/*.md"
+    ],
+    "sharedGlobals": []
+  },
+  "defaultProject": "frontend",
+  "cli": {
+    "defaultCollection": "@nx/workspace"
+  },
+  "generators": {
+    "@nx/workspace:workspace": {
+      "preset": "npm"
+    }
+  }
 }

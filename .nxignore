@@ -1,0 +1,13 @@
+# Ignore files that don't affect builds
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.nx/cache/
+.nx/workspace-data/

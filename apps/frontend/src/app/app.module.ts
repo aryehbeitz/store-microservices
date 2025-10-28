@@ -1,15 +1,16 @@
+import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
-import { ProductListComponent } from './components/product-list/product-list.component';
+import { AdminDashboardComponent } from './components/admin-dashboard/admin-dashboard.component';
 import { CartComponent } from './components/cart/cart.component';
 import { CheckoutComponent } from './components/checkout/checkout.component';
-import { AdminDashboardComponent } from './components/admin-dashboard/admin-dashboard.component';
+import { OrdersComponent } from './components/orders/orders.component';
+import { ProductListComponent } from './components/product-list/product-list.component';
 
 @NgModule({
   declarations: [
@@ -18,6 +19,7 @@ import { AdminDashboardComponent } from './components/admin-dashboard/admin-dash
     CartComponent,
     CheckoutComponent,
     AdminDashboardComponent,
+    OrdersComponent,
   ],
   imports: [
     BrowserModule,
@@ -29,6 +31,7 @@ import { AdminDashboardComponent } from './components/admin-dashboard/admin-dash
       { path: '', component: ProductListComponent },
       { path: 'cart', component: CartComponent },
       { path: 'checkout', component: CheckoutComponent },
+      { path: 'orders', component: OrdersComponent },
       { path: 'secret-admin-dashboard-xyz', component: AdminDashboardComponent },
       { path: '**', redirectTo: '' },
     ]),

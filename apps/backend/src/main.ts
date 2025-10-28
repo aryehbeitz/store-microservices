@@ -1,19 +1,18 @@
-import express from 'express';
+import {
+    AdminConfig,
+    CreateOrderRequest,
+    CreateOrderResponse,
+    PaymentRequest,
+    PaymentWebhook,
+    RequestLog,
+    ServiceStatus
+} from '@honey-store/shared/types';
+import axios from 'axios';
 import cors from 'cors';
+import express from 'express';
+import { createServer } from 'http';
 import mongoose from 'mongoose';
 import { Server } from 'socket.io';
-import { createServer } from 'http';
-import axios from 'axios';
-import {
-  Order,
-  CreateOrderRequest,
-  CreateOrderResponse,
-  PaymentRequest,
-  PaymentWebhook,
-  ServiceStatus,
-  RequestLog,
-  AdminConfig,
-} from '@honey-store/shared/types';
 
 const app = express();
 const httpServer = createServer(app);
@@ -143,6 +142,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Get connection method info
+app.get('/api/connection-info', (req, res) => {
+  res.json({
+    connectionMethod: CONNECTION_METHOD,
+    serviceLocation: SERVICE_LOCATION,
+    canReceiveWebhooks: CONNECTION_METHOD !== 'port-forward',
+    webhookUrl: CONNECTION_METHOD === 'port-forward' ? 'Not available' : `${req.protocol}://${req.get('host')}/api/webhook/payment`
+  });
+});
+
 // Get all orders
 app.get('/api/orders', async (req, res) => {
   const startTime = Date.now();
@@ -163,7 +172,15 @@ app.get('/api/orders', async (req, res) => {
     log.duration = duration;
     logRequest(log);
 
-    res.json(orders);
+    // Add connection method info to response
+    res.json({
+      orders,
+      connectionInfo: {
+        method: CONNECTION_METHOD,
+        location: SERVICE_LOCATION,
+        canReceiveWebhooks: CONNECTION_METHOD !== 'port-forward'
+      }
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     log.status = 500;
@@ -323,10 +340,12 @@ app.post('/api/webhook/payment', async (req, res) => {
   try {
     const webhook: PaymentWebhook = req.body;
 
-    // Update order payment status
-    await OrderModel.findByIdAndUpdate(webhook.orderId, {
-      paymentStatus: webhook.status,
-    });
+    // Update order payment status and get the updated order
+    const updatedOrder = await OrderModel.findByIdAndUpdate(
+      webhook.orderId,
+      { paymentStatus: webhook.status },
+      { new: true }
+    );
 
     const duration = Date.now() - startTime;
     log.status = 200;
@@ -334,6 +353,12 @@ app.post('/api/webhook/payment', async (req, res) => {
     logRequest(log);
 
     console.log('Payment webhook received:', webhook);
+
+    // Emit real-time updates to connected clients
+    if (updatedOrder) {
+      io.emit('order-updated', updatedOrder);
+      io.emit('payment-webhook', webhook);
+    }
 
     res.json({ message: 'Webhook processed successfully' });
   } catch (error) {
@@ -343,6 +368,65 @@ app.post('/api/webhook/payment', async (req, res) => {
     logRequest(log);
 
     res.status(500).json({ error: 'Failed to process webhook' });
+  }
+});
+
+// Retry payment for an order
+app.post('/api/orders/:id/retry-payment', async (req, res) => {
+  const startTime = Date.now();
+  const log: RequestLog = {
+    id: Math.random().toString(36),
+    timestamp: new Date(),
+    source: 'frontend',
+    destination: 'backend',
+    method: 'POST',
+    path: `/api/orders/${req.params.id}/retry-payment`,
+  };
+
+  try {
+    const order = await OrderModel.findById(req.params.id);
+    const duration = Date.now() - startTime;
+
+    if (!order) {
+      log.status = 404;
+      log.duration = duration;
+      logRequest(log);
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Only allow retry for orders with error or rejected payment status
+    if (order.paymentStatus !== 'error' && order.paymentStatus !== 'rejected') {
+      log.status = 400;
+      log.duration = duration;
+      logRequest(log);
+      return res.status(400).json({
+        error: 'Order payment cannot be retried. Current status: ' + order.paymentStatus
+      });
+    }
+
+    // Reset payment status to pending
+    order.paymentStatus = 'pending';
+    await order.save();
+
+    // Retry payment processing
+    processPayment(order._id.toString(), order.total, order.customerEmail);
+
+    log.status = 200;
+    log.duration = duration;
+    logRequest(log);
+
+    res.json({
+      message: 'Payment retry initiated successfully',
+      orderId: order._id.toString(),
+      status: 'pending'
+    });
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    log.status = 500;
+    log.duration = duration;
+    logRequest(log);
+
+    res.status(500).json({ error: 'Failed to retry payment' });
   }
 });
 

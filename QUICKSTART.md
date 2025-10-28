@@ -88,6 +88,13 @@ Get public HTTPS URLs for all services!
 
 Debug locally while connected to the cluster!
 
+**Then run local services:**
+```bash
+# In separate terminals:
+npm run start:backend    # If intercepting backend
+npm run start:payment    # If intercepting payment service
+```
+
 ---
 
 ## Try It Out
@@ -114,6 +121,15 @@ Debug locally while connected to the cluster!
 2. Place a new order
 3. Watch it fail in real-time!
 4. See red indicators and error logs
+
+### 4. Test Orders Page 📋
+
+1. Go to **Orders page**: http://localhost:8080/orders
+2. Place an order and see it appear
+3. Notice the connection method indicators:
+   - **Port Forward**: Orders stay "pending" (no webhooks)
+   - **Telepresence/Ngrok**: Orders update automatically (real webhooks)
+4. Try retrying failed payments
 
 ---
 

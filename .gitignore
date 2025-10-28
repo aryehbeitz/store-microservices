@@ -41,6 +41,9 @@ Thumbs.db
 # Nx
 .nx/cache
 
+# Angular
+.angular
+
 # Downloaded binaries
 minikube-*
 k3d-*

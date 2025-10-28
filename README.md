@@ -105,6 +105,126 @@ Creates public HTTPS URLs for all services. Great for webhook testing!
 
 Connect your local development environment to the cluster. Perfect for debugging!
 
+## 🔄 Development Workflows
+
+### 1. Local Development (No Kubernetes)
+
+For pure local development without Kubernetes:
+
+```bash
+# Terminal 1 - MongoDB
+docker run -p 27017:27017 mongo:7
+
+# Terminal 2 - Backend
+npm run start:backend
+
+# Terminal 3 - Payment Service
+npm run start:payment
+
+# Terminal 4 - Frontend
+npm run start:frontend
+```
+
+**Access:** http://localhost:4200
+
+**Benefits:**
+- ✅ Fastest development cycle
+- ✅ Full debugging capabilities
+- ✅ Hot reload for all services
+- ❌ No Kubernetes features
+- ❌ No webhook testing
+
+### 2. Port Forwarding (Kubernetes + Local Access)
+
+For testing with Kubernetes but local access:
+
+```bash
+# Deploy to Kubernetes
+./scripts/k8s-start.sh
+./scripts/k8s-deploy.sh
+
+# Access via port forwarding
+./scripts/port-forward.sh
+```
+
+**Access:** http://localhost:8080
+
+**Benefits:**
+- ✅ Real Kubernetes environment
+- ✅ Production-like setup
+- ✅ Simple access method
+- ❌ No webhook support (orders stay pending)
+- ❌ No real-time updates
+
+### 3. Telepresence (Hybrid Development)
+
+For debugging with Kubernetes + local services:
+
+```bash
+# Deploy to Kubernetes
+./scripts/k8s-start.sh
+./scripts/k8s-deploy.sh
+
+# Connect with Telepresence
+./scripts/telepresence-start.sh
+# Choose which service to intercept (Backend, Payment Service, or Both)
+
+# In separate terminals, run local services:
+npm run start:backend    # If intercepting backend
+npm run start:payment    # If intercepting payment service
+```
+
+**Access:** http://localhost:8080 (frontend in K8s)
+
+**Benefits:**
+- ✅ Real Kubernetes environment
+- ✅ Local debugging with hot reload
+- ✅ Real webhook support (orders update automatically)
+- ✅ Test with real MongoDB and other services
+- ❌ More complex setup
+
+### 4. Ngrok (Public Webhook Testing)
+
+For testing webhooks and sharing with others:
+
+```bash
+# Deploy to Kubernetes
+./scripts/k8s-start.sh
+./scripts/k8s-deploy.sh
+
+# Create public tunnels
+./scripts/ngrok-start.sh
+```
+
+**Access:** Public HTTPS URLs (shown in terminal)
+
+**Benefits:**
+- ✅ Public HTTPS URLs
+- ✅ Real webhook support
+- ✅ Share with team/clients
+- ✅ Mobile testing
+- ❌ Requires ngrok account
+- ❌ URLs change on restart (free tier)
+
+## 📊 Orders Page - Connection Method Demo
+
+The new Orders page (`/orders`) demonstrates the difference between connection methods:
+
+### Port Forwarding Behavior
+- Orders show as "pending" and don't update automatically
+- Warning: "Orders won't update automatically with port forwarding"
+- Manual refresh required to see status changes
+
+### Telepresence/Ngrok Behavior
+- Orders update in real-time when payment webhooks are received
+- Success message: "Orders update in real-time via webhooks"
+- Live status updates without manual refresh
+
+### Visual Indicators
+- **Connection Method Badge**: Shows current method (PORT-FORWARD, NGROK, TELEPRESENCE)
+- **Webhook Status**: Indicates if webhooks are enabled
+- **Status Warnings**: Clear messages about update capabilities
+
 ## 🎯 Features
 
 ### Customer Features

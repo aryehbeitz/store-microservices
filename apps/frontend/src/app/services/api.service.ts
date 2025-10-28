@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
 import {
-  Order,
-  CreateOrderRequest,
-  CreateOrderResponse,
+    CreateOrderRequest,
+    CreateOrderResponse,
+    Order,
 } from '@honey-store/shared/types';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -27,7 +27,18 @@ export class ApiService {
     return this.http.get<Order>(`${this.backendUrl}/api/orders/${orderId}`);
   }
 
-  getAllOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.backendUrl}/api/orders`);
+  getAllOrders(): Observable<{ orders: Order[]; connectionInfo: any }> {
+    return this.http.get<{ orders: Order[]; connectionInfo: any }>(`${this.backendUrl}/api/orders`);
+  }
+
+  getConnectionInfo(): Observable<any> {
+    return this.http.get<any>(`${this.backendUrl}/api/connection-info`);
+  }
+
+  retryPayment(orderId: string): Observable<{ message: string; orderId: string; status: string }> {
+    return this.http.post<{ message: string; orderId: string; status: string }>(
+      `${this.backendUrl}/api/orders/${orderId}/retry-payment`,
+      {}
+    );
   }
 }
