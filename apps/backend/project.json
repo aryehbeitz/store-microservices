@@ -5,13 +5,16 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nx/node:webpack",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
+        "target": "node",
+        "compiler": "tsc",
         "outputPath": "dist/apps/backend",
         "main": "apps/backend/src/main.ts",
         "tsConfig": "apps/backend/tsconfig.app.json",
-        "assets": []
+        "assets": [],
+        "webpackConfig": "apps/backend/webpack.config.js"
       },
       "configurations": {
         "production": {

@@ -29,7 +29,7 @@ if [ "$CLUSTER_TYPE" = "minikube" ]; then
     minikube status &> /dev/null
     if [ $? -ne 0 ]; then
         echo "Starting Minikube..."
-        minikube start --cpus=4 --memory=4096
+        minikube start --cpus=2 --memory=4096
     else
         echo "Minikube is already running"
     fi

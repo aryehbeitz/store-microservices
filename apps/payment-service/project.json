@@ -5,13 +5,16 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nx/node:webpack",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
+        "target": "node",
+        "compiler": "tsc",
         "outputPath": "dist/apps/payment-service",
         "main": "apps/payment-service/src/main.ts",
         "tsConfig": "apps/payment-service/tsconfig.app.json",
-        "assets": []
+        "assets": [],
+        "webpackConfig": "apps/payment-service/webpack.config.js"
       },
       "configurations": {
         "production": {
