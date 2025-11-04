@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { io, Socket } from 'socket.io-client';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-  ServiceStatus,
-  RequestLog,
   AdminConfig,
+  RequestLog,
+  ServiceStatus,
 } from '@honey-store/shared/types';
-import { environment } from '../../../environments/environment';
+import { io, Socket } from 'socket.io-client';
 
 interface ServiceInfo extends ServiceStatus {
   socket?: Socket;
@@ -57,7 +56,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   connectToServices() {
     // Connect to backend
-    const backendSocket = io(`${environment.backendUrl}`, {
+    // Connect to backend Socket.IO (nginx proxies /socket.io to backend)
+    const backendSocket = io('/', {
+      path: '/socket.io',
       transports: ['websocket', 'polling'],
     });
 
@@ -89,34 +90,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.services['backend'].healthy = false;
     });
 
-    // Connect to payment service
-    const paymentSocket = io('http://localhost:3002', {
-      transports: ['websocket', 'polling'],
-    });
-
-    this.services['payment-service'].socket = paymentSocket;
-
-    paymentSocket.on('connect', () => {
-      console.log('Connected to payment service socket');
-      this.services['payment-service'].enabled = true;
-    });
-
-    paymentSocket.on('service-status', (status: ServiceStatus) => {
-      this.services['payment-service'] = {
-        ...status,
-        socket: paymentSocket,
-      };
-    });
-
-    paymentSocket.on('request-log', (log: RequestLog) => {
-      this.addRequestLog(log);
-    });
-
-    paymentSocket.on('disconnect', () => {
-      console.log('Disconnected from payment service socket');
-      this.services['payment-service'].enabled = false;
-      this.services['payment-service'].healthy = false;
-    });
+    // Payment service is now external - no socket connection needed
+    // The payment dashboard is available at http://REDACTED_IP/
+    this.services['payment-service'].enabled = true;
+    this.services['payment-service'].healthy = true;
+    console.log('Payment service is external - using payment dashboard at http://REDACTED_IP/');
   }
 
   addRequestLog(log: RequestLog) {

@@ -88,7 +88,10 @@ export class VersionNotificationComponent implements OnInit, OnDestroy {
   private socket: Socket;
 
   constructor() {
-    this.socket = io('http://localhost:3000');
+    // Connect to backend Socket.IO (nginx proxies /socket.io to backend)
+    this.socket = io('/', {
+      path: '/socket.io'
+    });
   }
 
   ngOnInit(): void {

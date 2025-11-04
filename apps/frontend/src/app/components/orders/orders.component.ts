@@ -158,8 +158,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
       this.socket.disconnect();
     }
 
-    // Connect to backend Socket.IO
-    this.socket = io('http://localhost:3000');
+    // Connect to backend Socket.IO (nginx proxies /socket.io to backend)
+    this.socket = io('/', {
+      path: '/socket.io'
+    });
 
     this.socket.on('connect', () => {
       console.log('Connected to real-time updates');

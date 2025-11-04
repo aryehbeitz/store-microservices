@@ -1,11 +1,10 @@
 import {
-    AdminConfig,
-    CreateOrderRequest,
-    CreateOrderResponse,
-    PaymentRequest,
-    PaymentWebhook,
-    RequestLog,
-    ServiceStatus
+  AdminConfig,
+  CreateOrderRequest,
+  CreateOrderResponse,
+  PaymentWebhook,
+  RequestLog,
+  ServiceStatus
 } from '@honey-store/shared/types';
 import axios from 'axios';
 import cors from 'cors';
@@ -31,6 +30,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongodb:27017/honey-store';
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3002';
+const BACKEND_PUBLIC_URL = process.env.BACKEND_PUBLIC_URL || '';
 const SERVICE_LOCATION = process.env.SERVICE_LOCATION || 'local';
 const CONNECTION_METHOD = process.env.CONNECTION_METHOD || 'direct';
 
@@ -288,19 +288,33 @@ async function processPayment(orderId: string, amount: number, customerEmail: st
     source: 'backend',
     destination: 'payment-service',
     method: 'POST',
-    path: '/api/payment',
+    path: '/payment',
   };
 
   const startTime = Date.now();
 
   try {
-    const paymentRequest: PaymentRequest = {
-      orderId,
-      amount,
-      customerEmail,
+    // Construct webhook URL
+    const webhookUrl = BACKEND_PUBLIC_URL
+      ? `${BACKEND_PUBLIC_URL}/api/webhook/payment`
+      : (CONNECTION_METHOD === 'ngrok' ? 'Not available - BACKEND_PUBLIC_URL not set' : 'http://backend:3000/api/webhook/payment');
+
+    // Convert payment delay from ms to seconds
+    const sleepSeconds = Math.max(1, Math.floor((adminConfig.paymentDelayMs || 2000) / 1000));
+
+    // Prepare payment request matching external service API
+    const paymentRequest = {
+      webhook_url: webhookUrl,
+      sleep: sleepSeconds,
+      data: {
+        orderId: orderId,
+        amount: amount,
+        currency: 'USD',
+        customerEmail: customerEmail,
+      },
     };
 
-    const response = await axios.post(`${PAYMENT_SERVICE_URL}/api/payment`, paymentRequest, {
+    const response = await axios.post(`${PAYMENT_SERVICE_URL}/payment`, paymentRequest, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -312,6 +326,12 @@ async function processPayment(orderId: string, amount: number, customerEmail: st
     logRequest(log);
 
     console.log('Payment request sent:', response.data);
+
+    // Store mapping of payment_id to orderId for webhook lookup
+    if (response.data && response.data.id) {
+      // In-memory mapping - could be enhanced with Redis or database
+      // This assumes webhook comes back with orderId in data field
+    }
   } catch (error) {
     const duration = Date.now() - startTime;
     log.status = 500;
@@ -338,12 +358,21 @@ app.post('/api/webhook/payment', async (req, res) => {
   };
 
   try {
-    const webhook: PaymentWebhook = req.body;
+    // External service webhook format: { payment_id, timestamp, data }
+    const webhookPayload = req.body;
+    const { payment_id, timestamp, data } = webhookPayload;
 
-    // Update order payment status and get the updated order
+    if (!data || !data.orderId) {
+      throw new Error('Missing orderId in webhook data');
+    }
+
+    const orderId = data.orderId;
+
+    // Update order payment status - assume approved if webhook received successfully
+    // (External service doesn't send explicit status, so we assume success)
     const updatedOrder = await OrderModel.findByIdAndUpdate(
-      webhook.orderId,
-      { paymentStatus: webhook.status },
+      orderId,
+      { paymentStatus: 'approved' },
       { new: true }
     );
 
@@ -352,12 +381,25 @@ app.post('/api/webhook/payment', async (req, res) => {
     log.duration = duration;
     logRequest(log);
 
-    console.log('Payment webhook received:', webhook);
+    console.log('Payment webhook received:', {
+      payment_id,
+      timestamp,
+      orderId,
+      data,
+    });
+
+    // Create webhook response matching our internal format for frontend
+    const webhookResponse: PaymentWebhook = {
+      orderId: orderId,
+      paymentId: payment_id,
+      status: 'approved',
+      message: 'Payment approved successfully',
+    };
 
     // Emit real-time updates to connected clients
     if (updatedOrder) {
       io.emit('order-updated', updatedOrder);
-      io.emit('payment-webhook', webhook);
+      io.emit('payment-webhook', webhookResponse);
     }
 
     res.json({ message: 'Webhook processed successfully' });
@@ -367,6 +409,7 @@ app.post('/api/webhook/payment', async (req, res) => {
     log.duration = duration;
     logRequest(log);
 
+    console.error('Failed to process webhook:', error);
     res.status(500).json({ error: 'Failed to process webhook' });
   }
 });
@@ -481,6 +524,9 @@ httpServer.listen(PORT, () => {
   console.log(`Backend service listening on port ${PORT}`);
   console.log(`MongoDB URI: ${MONGODB_URI}`);
   console.log(`Payment Service URL: ${PAYMENT_SERVICE_URL}`);
+  if (BACKEND_PUBLIC_URL) {
+    console.log(`Backend Public URL: ${BACKEND_PUBLIC_URL}`);
+  }
   console.log(`Service Location: ${SERVICE_LOCATION}`);
   console.log(`Connection Method: ${CONNECTION_METHOD}`);
 });

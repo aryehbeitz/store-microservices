@@ -105,6 +105,126 @@ Creates public HTTPS URLs for all services. Great for webhook testing!
 
 Connect your local development environment to the cluster. Perfect for debugging!
 
+---
+
+## 🎯 Kubernetes Deployment with Namespace & Context
+
+For production deployments or multi-environment setups, use the namespace-aware deployment scripts:
+
+### Build and Deploy to Specific Context/Namespace
+
+```bash
+# Build and deploy everything
+./scripts/k8s-build-and-deploy.sh <context-name> <namespace>
+
+# Example for GKE:
+./scripts/k8s-build-and-deploy.sh gke_my-project_us-central1_cluster-name meetup3
+
+# Example for local cluster:
+USE_GCR=false ./scripts/k8s-build-and-deploy.sh minikube meetup3
+```
+
+### Build Only
+
+```bash
+# Build all services (uses env vars or auto-detects)
+./scripts/k8s-build.sh
+
+# Build specific service
+./scripts/k8s-build-service.sh backend
+./scripts/k8s-build-service.sh frontend
+
+# Or use npm scripts:
+npm run k8s:build:backend
+npm run k8s:build:frontend
+npm run k8s:build:all
+```
+
+### Deploy Only
+
+```bash
+# Deploy to specific context and namespace
+./scripts/k8s-deploy.sh <context-name> <namespace>
+
+# Example:
+./scripts/k8s-deploy.sh gke_my-project_us-central1_cluster-name meetup3
+```
+
+### Redeploy Specific Service (Using npm)
+
+```bash
+# Build and redeploy a single service
+npm run k8s:build-deploy:backend
+npm run k8s:build-deploy:frontend
+
+# Or separately:
+npm run k8s:build:backend
+npm run k8s:deploy:backend
+
+# Or use the script directly:
+./scripts/k8s-redeploy-service.sh backend
+```
+
+### Delete Deployment
+
+```bash
+# Delete all resources in a namespace
+./scripts/k8s-delete.sh <context-name> <namespace>
+```
+
+### Available Scripts
+
+- `k8s-build.sh` - Build Docker images (supports GKE Artifact Registry or local)
+- `k8s-deploy.sh` - Deploy to Kubernetes with context and namespace
+- `k8s-build-and-deploy.sh` - Combined build and deploy
+- `k8s-build-service.sh` - Build a single service
+- `k8s-redeploy-service.sh` - Redeploy a single service
+- `k8s-delete.sh` - Delete all resources from namespace
+
+### GKE Configuration
+
+For Google Kubernetes Engine (GKE), set environment variables:
+
+```bash
+export GCP_PROJECT_ID=REDACTED_PROJECT
+export USE_GCR=true  # Optional, defaults to true
+export K8S_NAMESPACE=meetup3  # Optional, defaults to meetup3 for npm scripts
+
+# Then run:
+./scripts/k8s-build-and-deploy.sh <context> <namespace>
+```
+
+Optional environment variables:
+- `ARTIFACT_REGISTRY_LOCATION` - defaults to `us-east1`
+- `ARTIFACT_REGISTRY_REPO` - defaults to `docker-repo`
+- `K8S_NAMESPACE` - defaults to `meetup3` for npm scripts
+
+The scripts will automatically:
+- Detect GKE contexts (`gke_*`)
+- Auto-detect project ID from `gcloud config` if `GCP_PROJECT_ID` not set
+- Build images for `linux/amd64` platform
+- Push to Artifact Registry
+- Update deployments to use registry images
+
+### NPM Scripts for Quick Deployments
+
+```bash
+# Set environment variables once
+export GCP_PROJECT_ID=REDACTED_PROJECT
+export K8S_NAMESPACE=meetup3
+
+# Build and deploy services
+npm run k8s:build-deploy:backend
+npm run k8s:build-deploy:frontend
+
+# Check status
+npm run k8s:status
+
+# View logs
+npm run k8s:logs:backend
+npm run k8s:logs:frontend
+```
+
 ## 🔄 Development Workflows
 
 ### 1. Local Development (No Kubernetes)
@@ -115,7 +235,17 @@ For pure local development without Kubernetes:
 # Terminal 1 - MongoDB
 docker run -p 27017:27017 mongo:7
 
-# Terminal 2 - Backend
+# Terminal 2 - Backend (with environment variables)
+cd apps/backend
+# Option 1: Copy env.example and edit it, then source it
+cp env.example env.local
+# Edit env.local with your values, then:
+source env.local
+npm run start:backend
+
+# OR Option 2: Set variables inline
+MONGODB_URI=mongodb://localhost:27017/honey-store \
+PAYMENT_SERVICE_URL=http://REDACTED_IP \
 npm run start:backend
 
 # Terminal 3 - Payment Service
@@ -126,6 +256,10 @@ npm run start:frontend
 ```
 
 **Access:** http://localhost:4200
+
+**Environment Variables:**
+- See `apps/backend/env.example` for all available variables
+- Copy it to `env.local` and customize for your setup
 
 **Benefits:**
 - ✅ Fastest development cycle

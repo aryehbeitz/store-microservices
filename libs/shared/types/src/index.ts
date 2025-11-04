@@ -51,6 +51,7 @@ export interface PaymentRequest {
   orderId: string;
   amount: number;
   customerEmail: string;
+  webhook_url: string;
 }
 
 export interface PaymentResponse {

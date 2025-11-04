@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: payment-system
   labels:
     app: backend
 spec:
@@ -27,7 +28,7 @@ spec:
             - name: MONGODB_URI
               value: "mongodb://mongodb:27017/honey-store"
             - name: PAYMENT_SERVICE_URL
-              value: "http://payment-service:3002"
+              value: "http://REDACTED_IP"
             - name: SERVICE_LOCATION
               value: "cloud"
             - name: CONNECTION_METHOD
@@ -56,6 +57,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend
+  namespace: payment-system
   labels:
     app: backend
 spec:
