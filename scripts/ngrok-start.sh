@@ -31,14 +31,10 @@ echo "Starting port forwards for all services..."
 # Kill any existing port forwards
 ./scripts/stop-port-forward.sh 2>/dev/null
 
-# Start port forwards for all services
+# Start port forwards for backend and frontend
 kubectl port-forward service/backend 3000:3000 > /dev/null 2>&1 &
 BACKEND_PF_PID=$!
 echo $BACKEND_PF_PID > /tmp/port-forward-backend.pid
-
-kubectl port-forward service/payment-service 3002:3002 > /dev/null 2>&1 &
-PAYMENT_PF_PID=$!
-echo $PAYMENT_PF_PID > /tmp/port-forward-payment-service.pid
 
 kubectl port-forward service/frontend 8080:80 > /dev/null 2>&1 &
 FRONTEND_PF_PID=$!
@@ -77,25 +73,22 @@ if command -v curl &> /dev/null; then
                 if [ -n "$BACKEND_URL" ] && [ "$BACKEND_URL" != "null" ]; then
                     echo -e "${GREEN}Backend (Ngrok):  $BACKEND_URL${NC}"
                     echo -e "${GREEN}Frontend (Local): http://localhost:8080${NC}"
-                    echo -e "${GREEN}Payment (Local):  http://localhost:3002${NC}"
                     echo -e "\n${YELLOW}Webhook Demo: Orders will update in real-time!${NC}"
                     echo -e "${YELLOW}The backend can receive webhooks via the ngrok URL${NC}"
 
-                    # Update payment service to use ngrok URL for backend
-                    echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
-                    kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
-                    echo -e "${GREEN}✓ Payment service environment updated${NC}"
-
-                    # Update backend to know ngrok is available
+                    # Update backend to know ngrok is available and set public URL
                     echo -e "\n${YELLOW}Updating backend to know ngrok is available...${NC}"
-                    kubectl set env deployment/backend CONNECTION_METHOD="ngrok"
+                    kubectl set env deployment/backend CONNECTION_METHOD="ngrok" BACKEND_PUBLIC_URL="$BACKEND_URL"
                     echo -e "${GREEN}✓ Backend environment updated${NC}"
 
-                    # Restart services to pick up new environment variables
-                    echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
-                    kubectl rollout restart deployment/payment-service
+                    # Restart backend to pick up new environment variables
+                    echo -e "\n${YELLOW}Restarting backend to pick up new environment variables...${NC}"
                     kubectl rollout restart deployment/backend
-                    echo -e "${GREEN}✓ Services restarted successfully${NC}"
+                    echo -e "${GREEN}✓ Backend restarted successfully${NC}"
+
+                    # Note about payment service URL
+                    echo -e "\n${YELLOW}Note: Set PAYMENT_SERVICE_URL environment variable to point to your payment service${NC}"
+                    echo -e "${YELLOW}Example: export PAYMENT_SERVICE_URL=http://your-payment-service:8080${NC}"
                 else
                     echo -e "${YELLOW}Could not extract backend URL${NC}"
                 fi
@@ -105,25 +98,22 @@ if command -v curl &> /dev/null; then
                 if [ -n "$BACKEND_URL" ]; then
                     echo -e "${GREEN}Backend (Ngrok):  $BACKEND_URL${NC}"
                     echo -e "${GREEN}Frontend (Local): http://localhost:8080${NC}"
-                    echo -e "${GREEN}Payment (Local):  http://localhost:3002${NC}"
                     echo -e "\n${YELLOW}Webhook Demo: Orders will update in real-time!${NC}"
                     echo -e "${YELLOW}The backend can receive webhooks via the ngrok URL${NC}"
 
-                    # Update payment service to use ngrok URL for backend
-                    echo -e "\n${YELLOW}Updating payment service to use ngrok backend URL...${NC}"
-                    kubectl set env deployment/payment-service BACKEND_URL="$BACKEND_URL" CONNECTION_METHOD="ngrok"
-                    echo -e "${GREEN}✓ Payment service environment updated${NC}"
-
-                    # Update backend to know ngrok is available
+                    # Update backend to know ngrok is available and set public URL
                     echo -e "\n${YELLOW}Updating backend to know ngrok is available...${NC}"
-                    kubectl set env deployment/backend CONNECTION_METHOD="ngrok"
+                    kubectl set env deployment/backend CONNECTION_METHOD="ngrok" BACKEND_PUBLIC_URL="$BACKEND_URL"
                     echo -e "${GREEN}✓ Backend environment updated${NC}"
 
-                    # Restart services to pick up new environment variables
-                    echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
-                    kubectl rollout restart deployment/payment-service
+                    # Restart backend to pick up new environment variables
+                    echo -e "\n${YELLOW}Restarting backend to pick up new environment variables...${NC}"
                     kubectl rollout restart deployment/backend
-                    echo -e "${GREEN}✓ Services restarted successfully${NC}"
+                    echo -e "${GREEN}✓ Backend restarted successfully${NC}"
+
+                    # Note about payment service URL
+                    echo -e "\n${YELLOW}Note: Set PAYMENT_SERVICE_URL environment variable to point to your payment service${NC}"
+                    echo -e "${YELLOW}Example: export PAYMENT_SERVICE_URL=http://your-payment-service:8080${NC}"
                 else
                     echo -e "${YELLOW}Could not extract backend URL${NC}"
                 fi

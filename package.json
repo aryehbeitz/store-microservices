@@ -19,7 +19,18 @@
     "version:backend": "cd apps/backend && npm run version:bump",
     "version:payment": "cd apps/payment-service && npm run version:bump",
     "version:all": "npm run version:frontend && npm run version:backend && npm run version:payment",
-    "watch": "./scripts/watch.sh"
+    "watch": "./scripts/watch.sh",
+    "k8s:build:backend": "./scripts/k8s-build-service.sh backend",
+    "k8s:build:frontend": "./scripts/k8s-build-service.sh frontend",
+    "k8s:build:all": "./scripts/k8s-build.sh",
+    "k8s:deploy:backend": "kubectl rollout restart deployment backend -n ${K8S_NAMESPACE:-meetup3}",
+    "k8s:deploy:frontend": "kubectl rollout restart deployment frontend -n ${K8S_NAMESPACE:-meetup3}",
+    "k8s:deploy:all": "npm run k8s:deploy:backend && npm run k8s:deploy:frontend",
+    "k8s:build-deploy:backend": "npm run k8s:build:backend && npm run k8s:deploy:backend",
+    "k8s:build-deploy:frontend": "npm run k8s:build:frontend && npm run k8s:deploy:frontend",
+    "k8s:status": "kubectl get pods -n ${K8S_NAMESPACE:-meetup3}",
+    "k8s:logs:backend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=backend --tail=50 -f",
+    "k8s:logs:frontend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=frontend --tail=50 -f"
   },
   "private": true,
   "dependencies": {

@@ -58,3 +58,8 @@ telepresence-*
 *.swp
 *.swo
 *~
+
+# Local environment files (not committed)
+env.local
+*.env.local
+.env

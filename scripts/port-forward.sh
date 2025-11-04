@@ -44,9 +44,6 @@ start_port_forward() {
         "backend")
             target_port=3000
             ;;
-        "payment-service")
-            target_port=3002
-            ;;
         *)
             target_port=$port
             ;;
@@ -70,7 +67,6 @@ echo ""
 
 # Start port forwards
 start_port_forward "backend" "3000" "Backend"
-start_port_forward "payment-service" "3002" "Payment Service"
 start_port_forward "frontend" "8080" "Frontend"
 
 echo ""
@@ -79,21 +75,21 @@ echo -e "${BLUE}  Service URLs                       ${NC}"
 echo -e "${BLUE}======================================${NC}"
 echo -e "${GREEN}Frontend:        http://localhost:8080${NC}"
 echo -e "${GREEN}Backend:         http://localhost:3000${NC}"
-echo -e "${GREEN}Payment Service: http://localhost:3002${NC}"
 echo -e "${GREEN}Admin Dashboard: http://localhost:8080/secret-admin-dashboard-xyz${NC}"
 echo ""
+echo -e "${YELLOW}Note: Set PAYMENT_SERVICE_URL environment variable to point to your payment service${NC}"
+echo -e "${YELLOW}Example: export PAYMENT_SERVICE_URL=http://your-payment-service:8080${NC}"
+echo ""
 
-# Update services to use direct connection method
-echo -e "\n${YELLOW}Updating services to use direct connection method...${NC}"
-kubectl set env deployment/payment-service CONNECTION_METHOD="direct"
+# Update backend to use direct connection method
+echo -e "\n${YELLOW}Updating backend to use direct connection method...${NC}"
 kubectl set env deployment/backend CONNECTION_METHOD="direct"
-echo -e "${GREEN}✓ Services environment updated to direct mode${NC}"
+echo -e "${GREEN}✓ Backend environment updated to direct mode${NC}"
 
-# Restart services to pick up new environment variables
-echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
-kubectl rollout restart deployment/payment-service
+# Restart backend to pick up new environment variables
+echo -e "\n${YELLOW}Restarting backend to pick up new environment variables...${NC}"
 kubectl rollout restart deployment/backend
-echo -e "${GREEN}✓ Services restarted successfully${NC}"
+echo -e "${GREEN}✓ Backend restarted successfully${NC}"
 
 echo ""
 echo -e "${YELLOW}Note: Port forwarding processes are running in the background${NC}"

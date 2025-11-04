@@ -37,27 +37,23 @@ fi
 
 echo -e "${GREEN}✓ Connected to cluster${NC}\n"
 
-# Update services to use telepresence connection method
-echo -e "${BLUE}Step 2: Updating services to use telepresence connection method${NC}"
-kubectl set env deployment/payment-service CONNECTION_METHOD="telepresence"
+# Update backend to use telepresence connection method
+echo -e "${BLUE}Step 2: Updating backend to use telepresence connection method${NC}"
 kubectl set env deployment/backend CONNECTION_METHOD="telepresence"
-echo -e "${GREEN}✓ Services environment updated to telepresence mode${NC}"
+echo -e "${GREEN}✓ Backend environment updated to telepresence mode${NC}"
 
-# Restart services to pick up new environment variables
-echo -e "\n${YELLOW}Restarting services to pick up new environment variables...${NC}"
-kubectl rollout restart deployment/payment-service
+# Restart backend to pick up new environment variables
+echo -e "\n${YELLOW}Restarting backend to pick up new environment variables...${NC}"
 kubectl rollout restart deployment/backend
-echo -e "${GREEN}✓ Services restarted successfully${NC}\n"
+echo -e "${GREEN}✓ Backend restarted successfully${NC}\n"
 
 echo -e "${BLUE}Step 3: Setting up intercepts${NC}"
 echo ""
 echo "Choose which service to intercept:"
 echo "  1) Backend"
-echo "  2) Payment Service"
-echo "  3) Both"
-echo "  4) None (just connect to cluster)"
+echo "  2) None (just connect to cluster)"
 echo ""
-read -p "Enter your choice (1-4): " choice
+read -p "Enter your choice (1-2): " choice
 
 case $choice in
     1)
@@ -70,38 +66,16 @@ case $choice in
         echo "  npm run serve"
         echo ""
         echo "Your local backend will handle requests from the cluster!"
+        echo ""
+        echo -e "${YELLOW}Note: Set PAYMENT_SERVICE_URL environment variable to point to your payment service${NC}"
+        echo -e "${YELLOW}Example: export PAYMENT_SERVICE_URL=http://your-payment-service:8080${NC}"
         ;;
     2)
-        echo -e "\n${BLUE}Intercepting payment service...${NC}"
-        telepresence intercept payment-service --port 3002:3002
-        echo -e "${GREEN}✓ Payment service intercepted${NC}"
-        echo ""
-        echo "Now run your local payment service:"
-        echo "  cd apps/payment-service"
-        echo "  npm run serve"
-        echo ""
-        echo "Your local payment service will handle requests from the cluster!"
-        ;;
-    3)
-        echo -e "\n${BLUE}Intercepting backend service...${NC}"
-        telepresence intercept backend --port 3000:3000
-        echo -e "${GREEN}✓ Backend service intercepted${NC}"
-        echo ""
-        echo -e "${BLUE}Intercepting payment service...${NC}"
-        telepresence intercept payment-service --port 3002:3002
-        echo -e "${GREEN}✓ Payment service intercepted${NC}"
-        echo ""
-        echo "Now run your local services in separate terminals:"
-        echo ""
-        echo "Terminal 1:"
-        echo "  cd apps/backend && npm run serve"
-        echo ""
-        echo "Terminal 2:"
-        echo "  cd apps/payment-service && npm run serve"
-        ;;
-    4)
         echo -e "${GREEN}Connected to cluster without intercepts${NC}"
         echo "You can now access cluster services from your local machine"
+        echo ""
+        echo -e "${YELLOW}Note: Set PAYMENT_SERVICE_URL environment variable to point to your payment service${NC}"
+        echo -e "${YELLOW}Example: export PAYMENT_SERVICE_URL=http://your-payment-service:8080${NC}"
         ;;
     *)
         echo -e "${RED}Invalid choice${NC}"
@@ -121,9 +95,8 @@ echo -e "${BLUE}======================================${NC}"
 echo -e "${BLUE}  Service Access                     ${NC}"
 echo -e "${BLUE}======================================${NC}"
 echo -e "${GREEN}You can now access cluster services directly:${NC}"
-echo "  Backend:         http://backend.default.svc.cluster.local:3000"
-echo "  Payment Service: http://payment-service.default.svc.cluster.local:3002"
-echo "  MongoDB:         mongodb://mongodb.default.svc.cluster.local:27017"
+echo "  Backend: http://backend.default.svc.cluster.local:3000"
+echo "  MongoDB: mongodb://mongodb.default.svc.cluster.local:27017"
 
 echo ""
 echo -e "${YELLOW}To stop telepresence:${NC}"
@@ -137,21 +110,18 @@ cat > scripts/stop-telepresence.sh << 'EOF'
 
 echo "Stopping telepresence..."
 telepresence leave backend 2>/dev/null
-telepresence leave payment-service 2>/dev/null
 telepresence quit
 
-# Reset services to default connection method
-echo "Resetting services to default connection method..."
-kubectl set env deployment/payment-service CONNECTION_METHOD="direct"
+# Reset backend to default connection method
+echo "Resetting backend to default connection method..."
 kubectl set env deployment/backend CONNECTION_METHOD="direct"
 
-# Restart services to pick up new environment variables
-echo "Restarting services to pick up new environment variables..."
-kubectl rollout restart deployment/payment-service
+# Restart backend to pick up new environment variables
+echo "Restarting backend to pick up new environment variables..."
 kubectl rollout restart deployment/backend
 
 echo "Telepresence stopped"
-echo "Services reset to default connection method"
+echo "Backend reset to default connection method"
 EOF
 
 chmod +x scripts/stop-telepresence.sh
