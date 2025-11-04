@@ -28,7 +28,9 @@ spec:
             - name: MONGODB_URI
               value: "mongodb://mongodb:27017/honey-store"
             - name: PAYMENT_SERVICE_URL
-              value: "http://REDACTED_IP"
+              value: "http://payment-api:8080"
+            - name: BACKEND_PUBLIC_URL
+              value: "http://backend:3000"
             - name: SERVICE_LOCATION
               value: "cloud"
             - name: CONNECTION_METHOD
@@ -61,7 +63,7 @@ metadata:
   labels:
     app: backend
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - port: 3000
       targetPort: 3000
