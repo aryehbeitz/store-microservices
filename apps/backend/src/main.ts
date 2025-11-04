@@ -37,7 +37,7 @@ const CONNECTION_METHOD = process.env.CONNECTION_METHOD || 'direct';
 // Admin configuration
 let adminConfig: AdminConfig = {
   simulatePaymentError: false,
-  paymentDelayMs: 2000,
+  paymentDelayMs: 15000, // 15 seconds - orders will show as pending until webhook returns
 };
 
 // Service status tracking
@@ -144,11 +144,15 @@ app.get('/health', (req, res) => {
 
 // Get connection method info
 app.get('/api/connection-info', (req, res) => {
+  const webhookUrl = BACKEND_PUBLIC_URL
+    ? `${BACKEND_PUBLIC_URL}/api/webhook/payment`
+    : `${req.protocol}://${req.get('host')}/api/webhook/payment`;
+
   res.json({
     connectionMethod: CONNECTION_METHOD,
     serviceLocation: SERVICE_LOCATION,
-    canReceiveWebhooks: CONNECTION_METHOD !== 'port-forward',
-    webhookUrl: CONNECTION_METHOD === 'port-forward' ? 'Not available' : `${req.protocol}://${req.get('host')}/api/webhook/payment`
+    canReceiveWebhooks: true,
+    webhookUrl: webhookUrl
   });
 });
 
@@ -173,12 +177,17 @@ app.get('/api/orders', async (req, res) => {
     logRequest(log);
 
     // Add connection method info to response
+    const webhookUrl = BACKEND_PUBLIC_URL
+      ? `${BACKEND_PUBLIC_URL}/api/webhook/payment`
+      : 'http://backend:3000/api/webhook/payment';
+
     res.json({
       orders,
       connectionInfo: {
         method: CONNECTION_METHOD,
         location: SERVICE_LOCATION,
-        canReceiveWebhooks: CONNECTION_METHOD !== 'port-forward'
+        canReceiveWebhooks: true,
+        webhookUrl: webhookUrl
       }
     });
   } catch (error) {
@@ -295,9 +304,11 @@ async function processPayment(orderId: string, amount: number, customerEmail: st
 
   try {
     // Construct webhook URL
+    // If BACKEND_PUBLIC_URL is set, use it (for external access)
+    // Otherwise, use internal service name (for cluster-internal access)
     const webhookUrl = BACKEND_PUBLIC_URL
       ? `${BACKEND_PUBLIC_URL}/api/webhook/payment`
-      : (CONNECTION_METHOD === 'ngrok' ? 'Not available - BACKEND_PUBLIC_URL not set' : 'http://backend:3000/api/webhook/payment');
+      : 'http://backend:3000/api/webhook/payment';
 
     // Convert payment delay from ms to seconds
     const sleepSeconds = Math.max(1, Math.floor((adminConfig.paymentDelayMs || 2000) / 1000));
