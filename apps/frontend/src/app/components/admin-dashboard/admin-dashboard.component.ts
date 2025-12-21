@@ -138,7 +138,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (!backendSocket.connected) {
         console.log(`Failed to connect to ${isLocal ? 'local' : 'K8s'} backend, trying fallback...`);
         backendSocket.disconnect();
-        
+
         // If we tried local and it failed, try K8s
         if (isLocal && this.frontendLocation === 'local') {
           this.tryConnectBackend('/', false);
@@ -197,7 +197,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       console.log(`Disconnected from ${isLocal ? 'local' : 'K8s'} backend socket`);
       this.services['backend'].enabled = false;
       this.services['backend'].healthy = false;
-      
+
       // If local backend disconnected and we're running locally, try K8s fallback
       if (isLocal && this.frontendLocation === 'local') {
         this.reconnectTimer = setTimeout(() => {
@@ -212,7 +212,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     backendSocket.on('connect_error', (error) => {
       console.log(`Connection error to ${isLocal ? 'local' : 'K8s'} backend:`, error);
       clearTimeout(connectionTimeout);
-      
+
       // If local backend failed and we're running locally, try K8s
       if (isLocal && this.frontendLocation === 'local') {
         this.reconnectTimer = setTimeout(() => {
@@ -232,8 +232,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           // Try local backend again with timeout
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 2000);
-          
-          fetch(`${environment.backendUrl}/health`, { 
+
+          fetch(`${environment.backendUrl}/health`, {
             method: 'GET',
             signal: controller.signal
           })
