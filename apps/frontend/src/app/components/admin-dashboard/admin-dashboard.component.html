@@ -25,9 +25,8 @@
     </div>
   </div>
 
-  <div class="dashboard-grid">
-    <!-- Service Status Boxes -->
-    <div class="services-panel">
+  <!-- Service Status Boxes -->
+  <div class="services-panel">
       <h3>Service Status</h3>
 
       <div class="service-boxes">
@@ -148,151 +147,150 @@
         </ul>
         <p class="info-note"><strong>Note:</strong> Updates work via Socket.IO even when services are on K8s. Connection method changes are shown with notifications.</p>
       </div>
-    </div>
 
-    <!-- Control Panel -->
-    <div class="control-panel">
-      <h3>Configuration</h3>
+      <!-- Configuration -->
+      <div class="control-panel">
+        <h3>Configuration</h3>
 
-      <div class="control-group">
-        <label class="toggle-label">
+        <div class="control-group">
+          <label class="toggle-label">
+            <input
+              type="checkbox"
+              [checked]="adminConfig.simulatePaymentError"
+              (change)="togglePaymentError()"
+            />
+            <span>Simulate Payment Error</span>
+          </label>
+        </div>
+
+        <div class="control-group">
+          <label>Payment Delay (ms):</label>
           <input
-            type="checkbox"
-            [checked]="adminConfig.simulatePaymentError"
-            (change)="togglePaymentError()"
+            type="range"
+            min="500"
+            max="5000"
+            step="500"
+            [value]="adminConfig.paymentDelayMs"
+            (input)="updatePaymentDelay($event)"
           />
-          <span>Simulate Payment Error</span>
-        </label>
-      </div>
-
-      <div class="control-group">
-        <label>Payment Delay (ms):</label>
-        <input
-          type="range"
-          min="500"
-          max="5000"
-          step="500"
-          [value]="adminConfig.paymentDelayMs"
-          (input)="updatePaymentDelay($event)"
-        />
-        <span class="value-display">{{ adminConfig.paymentDelayMs }}ms</span>
-      </div>
-
-      <div class="service-status-list">
-        <h4>Service Status:</h4>
-
-        <!-- Frontend Status -->
-        <div class="status-item">
-          <div
-            class="status-indicator"
-            [style.background]="'#4caf50'"
-          ></div>
-          <div class="status-info">
-            <strong>Frontend</strong>
-            <span>Running</span>
-            <div class="connection-method-display">
-              <span class="location-badge" [class.location-local]="frontendLocation === 'local'" [class.location-cloud]="frontendLocation === 'cloud'">
-                {{ getLocationLabel(frontendLocation) }}
-              </span>
-              <span class="location-description">
-                {{ getLocationDescription(frontendLocation, 'frontend') }}
-              </span>
-            </div>
-          </div>
+          <span class="value-display">{{ adminConfig.paymentDelayMs }}ms</span>
         </div>
 
-        <!-- Backend Status -->
-        <div
-          class="status-item"
-          [class.connection-changed]="services['backend'].connectionMethodChanged"
-        >
-          <div
-            class="status-indicator"
-            [style.background]="services['backend'].enabled ? (services['backend'].healthy ? '#4caf50' : '#f44336') : '#999'"
-            [class.indicator-pulse]="services['backend'].connectionMethodChanged"
-          ></div>
-          <div class="status-info">
-            <strong>Backend</strong>
-            <span>{{ getServiceStatusLabel(services['backend']) }}</span>
-            <div class="connection-method-display">
-              <span class="location-badge" [class.location-local]="services['backend'].location === 'local'" [class.location-cloud]="services['backend'].location === 'cloud'">
-                {{ getLocationLabel(services['backend'].location) }}
-              </span>
-              <span
-                class="connection-method-badge"
-                [class.method-changed]="services['backend'].connectionMethodChanged"
-                [style.background]="getServiceColor(services['backend'])"
-              >
-                {{ getConnectionMethodIcon(services['backend'].connectionMethod) }}
-                {{ getConnectionMethodLabel(services['backend'].connectionMethod) }}
-                <span *ngIf="services['backend'].connectionMethodChanged" class="change-badge">CHANGED</span>
-              </span>
-              <span class="location-description">
-                {{ getLocationDescription(services['backend'].location, 'backend') }}
-              </span>
+        <div class="service-status-list">
+          <h4>Service Status:</h4>
+
+          <!-- Frontend Status -->
+          <div class="status-item">
+            <div
+              class="status-indicator"
+              [style.background]="'#4caf50'"
+            ></div>
+            <div class="status-info">
+              <strong>Frontend</strong>
+              <span>Running</span>
+              <div class="connection-method-display">
+                <span class="location-badge" [class.location-local]="frontendLocation === 'local'" [class.location-cloud]="frontendLocation === 'cloud'">
+                  {{ getLocationLabel(frontendLocation) }}
+                </span>
+                <span class="location-description">
+                  {{ getLocationDescription(frontendLocation, 'frontend') }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Payment Service Status -->
-        <div class="status-item">
+          <!-- Backend Status -->
           <div
-            class="status-indicator"
-            [style.background]="services['payment-service'].enabled ? (services['payment-service'].healthy ? '#4caf50' : '#f44336') : '#999'"
-          ></div>
-          <div class="status-info">
-            <strong>Payment Service</strong>
-            <span>{{ getServiceStatusLabel(services['payment-service']) }}</span>
-            <div class="connection-method-display">
-              <span class="location-badge location-cloud">K8s</span>
-              <span class="location-description">
-                External service - always runs in Kubernetes
-              </span>
+            class="status-item"
+            [class.connection-changed]="services['backend'].connectionMethodChanged"
+          >
+            <div
+              class="status-indicator"
+              [style.background]="services['backend'].enabled ? (services['backend'].healthy ? '#4caf50' : '#f44336') : '#999'"
+              [class.indicator-pulse]="services['backend'].connectionMethodChanged"
+            ></div>
+            <div class="status-info">
+              <strong>Backend</strong>
+              <span>{{ getServiceStatusLabel(services['backend']) }}</span>
+              <div class="connection-method-display">
+                <span class="location-badge" [class.location-local]="services['backend'].location === 'local'" [class.location-cloud]="services['backend'].location === 'cloud'">
+                  {{ getLocationLabel(services['backend'].location) }}
+                </span>
+                <span
+                  class="connection-method-badge"
+                  [class.method-changed]="services['backend'].connectionMethodChanged"
+                  [style.background]="getServiceColor(services['backend'])"
+                >
+                  {{ getConnectionMethodIcon(services['backend'].connectionMethod) }}
+                  {{ getConnectionMethodLabel(services['backend'].connectionMethod) }}
+                  <span *ngIf="services['backend'].connectionMethodChanged" class="change-badge">CHANGED</span>
+                </span>
+                <span class="location-description">
+                  {{ getLocationDescription(services['backend'].location, 'backend') }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- MongoDB Status -->
-        <div class="status-item">
-          <div
-            class="status-indicator"
-            [style.background]="'#4caf50'"
-          ></div>
-          <div class="status-info">
-            <strong>MongoDB</strong>
-            <span>Running</span>
-            <div class="connection-method-display">
-              <span class="location-badge location-cloud">K8s</span>
-              <span class="location-description">
-                Database - always runs in Kubernetes
-              </span>
+          <!-- Payment Service Status -->
+          <div class="status-item">
+            <div
+              class="status-indicator"
+              [style.background]="services['payment-service'].enabled ? (services['payment-service'].healthy ? '#4caf50' : '#f44336') : '#999'"
+            ></div>
+            <div class="status-info">
+              <strong>Payment Service</strong>
+              <span>{{ getServiceStatusLabel(services['payment-service']) }}</span>
+              <div class="connection-method-display">
+                <span class="location-badge location-cloud">K8s</span>
+                <span class="location-description">
+                  External service - always runs in Kubernetes
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MongoDB Status -->
+          <div class="status-item">
+            <div
+              class="status-indicator"
+              [style.background]="'#4caf50'"
+            ></div>
+            <div class="status-info">
+              <strong>MongoDB</strong>
+              <span>Running</span>
+              <div class="connection-method-display">
+                <span class="location-badge location-cloud">K8s</span>
+                <span class="location-description">
+                  Database - always runs in Kubernetes
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Request Logs -->
-    <div class="logs-panel">
-      <h3>Request Logs</h3>
-      <div class="logs-container">
-        <div class="log-entry" *ngFor="let log of requestLogs">
-          <div class="log-header">
-            <span class="log-method" [class.error]="log.status && log.status >= 400">{{ log.method }}</span>
-            <span class="log-path">{{ log.path }}</span>
-            <span class="log-status" [class.error]="log.status && log.status >= 400">
-              {{ log.status || 'pending' }}
-            </span>
+      <!-- Request Logs -->
+      <div class="logs-panel">
+        <h3>Request Logs</h3>
+        <div class="logs-container">
+          <div class="log-entry" *ngFor="let log of requestLogs">
+            <div class="log-header">
+              <span class="log-method" [class.error]="log.status && log.status >= 400">{{ log.method }}</span>
+              <span class="log-path">{{ log.path }}</span>
+              <span class="log-status" [class.error]="log.status && log.status >= 400">
+                {{ log.status || 'pending' }}
+              </span>
+            </div>
+            <div class="log-flow">
+              <span class="flow-source">{{ log.source }}</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-destination">{{ log.destination }}</span>
+              <span class="log-duration" *ngIf="log.duration">{{ log.duration }}ms</span>
+            </div>
+            <div class="log-timestamp">{{ log.timestamp | date:'HH:mm:ss.SSS' }}</div>
           </div>
-          <div class="log-flow">
-            <span class="flow-source">{{ log.source }}</span>
-            <span class="flow-arrow">→</span>
-            <span class="flow-destination">{{ log.destination }}</span>
-            <span class="log-duration" *ngIf="log.duration">{{ log.duration }}ms</span>
-          </div>
-          <div class="log-timestamp">{{ log.timestamp | date:'HH:mm:ss.SSS' }}</div>
         </div>
       </div>
     </div>
-  </div>
 </div>
