@@ -23,12 +23,19 @@ This guide provides detailed installation and setup instructions for macOS and L
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-#### 2. Install Node.js and npm
+#### 2. Install Node.js and pnpm
 
 ```bash
 brew install node
 node --version  # Should be 18 or higher
-npm --version
+
+# Install pnpm globally
+npm install -g pnpm
+# OR use corepack (recommended for Node.js 16.10+)
+corepack enable
+corepack prepare pnpm@latest --activate
+
+pnpm --version
 ```
 
 #### 3. Install Docker Desktop
@@ -84,7 +91,7 @@ telepresence version
 
 ### Linux (Ubuntu/Debian)
 
-#### 1. Install Node.js and npm
+#### 1. Install Node.js and pnpm
 
 ```bash
 # Using NodeSource repository
@@ -93,7 +100,14 @@ sudo apt-get install -y nodejs
 
 # Verify installation
 node --version  # Should be 18 or higher
-npm --version
+
+# Install pnpm globally
+npm install -g pnpm
+# OR use corepack (recommended for Node.js 16.10+)
+corepack enable
+corepack prepare pnpm@latest --activate
+
+pnpm --version
 ```
 
 #### 2. Install Docker

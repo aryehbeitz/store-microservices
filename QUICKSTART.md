@@ -5,6 +5,7 @@ Get the Honey Store up and running in 5 minutes!
 ## Prerequisites
 
 - Node.js 18+
+- pnpm (install globally: `npm install -g pnpm` or `corepack enable`)
 - Docker
 - kubectl
 - Minikube or K3s

@@ -40,7 +40,8 @@ This is a honey production items and accessories store featuring:
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 18+
+- pnpm (install globally: `npm install -g pnpm` or `corepack enable`)
 - Docker and Docker Compose
 - Minikube or K3s
 - kubectl
