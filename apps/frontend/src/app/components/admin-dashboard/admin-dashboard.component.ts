@@ -87,8 +87,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     // Connect to backend
     // When running locally, connect directly to backend URL
     // When in K8s, nginx proxies /socket.io to backend
-    const socketUrl = this.frontendLocation === 'local' 
-      ? environment.backendUrl 
+    const socketUrl = this.frontendLocation === 'local'
+      ? environment.backendUrl
       : '/';
     const backendSocket = io(socketUrl, {
       path: '/socket.io',
