@@ -3,6 +3,130 @@
   padding: 2rem;
   background: #f5f5f5;
   min-height: 100vh;
+  position: relative;
+}
+
+/* Connection Change Notifications */
+.notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notification {
+  background: white;
+  border-left: 4px solid #2196f3;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.notification-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-icon {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #2196f3;
+  background: #e3f2fd;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.notification-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.notification-content strong {
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.method-change {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.method-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+.method-from {
+  background: #999;
+}
+
+.method-to {
+  background: #2196f3;
+}
+
+.arrow {
+  color: #666;
+  font-weight: bold;
+}
+
+.notification-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.notification-time {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.notification-message {
+  color: #666;
+  font-size: 0.7rem;
+  font-style: italic;
+}
+
+.notification-dismiss {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.notification-dismiss:hover {
+  color: #333;
 }
 
 h2 {
@@ -19,7 +143,7 @@ h2 {
   gap: 1.5rem;
 }
 
-.visualization-panel {
+.services-panel {
   grid-column: 1;
   grid-row: 1 / 3;
   background: white;
@@ -28,18 +152,157 @@ h2 {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.visualization-panel h3 {
+.services-panel h3 {
   margin: 0 0 1.5rem 0;
   color: #333;
   font-size: 1.5rem;
 }
 
-.architecture-diagram {
-  width: 100%;
-  height: 500px;
-  border: 2px solid #eee;
+.service-boxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.service-box {
+  background: #f9f9f9;
+  border: 2px solid #e0e0e0;
   border-radius: 10px;
-  background: #fafafa;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.service-box.service-local {
+  border-color: #ff9800;
+  background: #fff8e1;
+}
+
+.service-box.service-remote {
+  border-color: #2196f3;
+  background: #e3f2fd;
+}
+
+.service-box.connection-changed {
+  border-color: #2196f3;
+  border-width: 3px;
+  animation: statusItemFlash 1.5s ease-in-out 3;
+}
+
+.service-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.service-box-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.service-status-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.service-status-badge.status-running {
+  background: #4caf50;
+  color: white;
+}
+
+.service-status-badge.status-healthy {
+  background: #4caf50;
+  color: white;
+}
+
+.service-status-badge.status-unhealthy {
+  background: #f44336;
+  color: white;
+}
+
+.service-status-badge.status-disconnected {
+  background: #999;
+  color: white;
+}
+
+.service-box-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.service-location,
+.service-connection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.service-location strong,
+.service-connection strong {
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.service-description {
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.connection-methods-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+}
+
+.connection-methods-info h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.connection-methods-info ul {
+  margin: 0 0 1rem 0;
+  padding-left: 1.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.connection-methods-info li {
+  margin-bottom: 0.5rem;
+}
+
+.connection-methods-info li strong {
+  color: #333;
+}
+
+.info-note {
+  margin: 1rem 0 0 0;
+  padding: 0.75rem;
+  background: #e3f2fd;
+  border-radius: 4px;
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.info-note strong {
+  color: #1976d2;
 }
 
 .service-node circle.pulse {
@@ -53,6 +316,56 @@ h2 {
   50% {
     opacity: 0.7;
   }
+}
+
+/* Connection Method Change Animations */
+.service-node circle.connection-change {
+  animation: connectionChangePulse 1.5s ease-in-out 3;
+}
+
+@keyframes connectionChangePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.change-ring {
+  animation: ringPulse 1.5s ease-in-out 3;
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.connection-method-changed {
+  animation: textFlash 1.5s ease-in-out 3;
+  font-weight: bold !important;
+}
+
+@keyframes textFlash {
+  0%, 100% {
+    color: #666;
+  }
+  50% {
+    color: #2196f3;
+  }
+}
+
+.change-indicator {
+  display: inline-block;
+  animation: textFlash 1.5s ease-in-out 3;
 }
 
 .request-flow {
@@ -77,6 +390,21 @@ h2 {
   padding: 1rem;
   background: #f9f9f9;
   border-radius: 8px;
+}
+
+.legend-note {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #e3f2fd;
+  border-left: 3px solid #2196f3;
+  border-radius: 4px;
+}
+
+.legend-note p {
+  margin: 0;
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .legend h4 {
@@ -176,6 +504,39 @@ h2 {
   background: #f9f9f9;
   border-radius: 8px;
   margin-bottom: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.status-item.connection-changed {
+  background: #e3f2fd;
+  border: 2px solid #2196f3;
+  animation: statusItemFlash 1.5s ease-in-out 3;
+}
+
+@keyframes statusItemFlash {
+  0%, 100% {
+    background: #f9f9f9;
+    border-color: transparent;
+  }
+  50% {
+    background: #e3f2fd;
+    border-color: #2196f3;
+  }
+}
+
+.status-indicator.indicator-pulse {
+  animation: indicatorPulse 1.5s ease-in-out 3;
+}
+
+@keyframes indicatorPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 8px rgba(33, 150, 243, 0);
+  }
 }
 
 .status-indicator {
@@ -204,11 +565,83 @@ h2 {
 
 .location-badge {
   display: inline-block;
-  padding: 0.125rem 0.5rem;
-  background: #e0e0e0;
+  padding: 0.25rem 0.5rem;
   border-radius: 10px;
   font-size: 0.75rem !important;
+  font-weight: 600;
   margin-top: 0.25rem;
+  color: white;
+}
+
+.location-badge.location-local {
+  background: #ff9800;
+}
+
+.location-badge.location-cloud {
+  background: #2196f3;
+}
+
+.location-description {
+  display: block;
+  color: #666;
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.connection-method-display {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.connection-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.connection-method-badge.method-changed {
+  animation: badgeFlash 1.5s ease-in-out 3;
+  transform: scale(1.05);
+}
+
+@keyframes badgeFlash {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0);
+  }
+}
+
+.change-badge {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .logs-panel {
@@ -338,7 +771,7 @@ h2 {
     grid-template-rows: auto auto auto;
   }
 
-  .visualization-panel {
+  .services-panel {
     grid-column: 1;
     grid-row: 1;
   }
@@ -351,5 +784,9 @@ h2 {
   .logs-panel {
     grid-column: 1;
     grid-row: 3;
+  }
+
+  .service-boxes {
+    grid-template-columns: 1fr;
   }
 }

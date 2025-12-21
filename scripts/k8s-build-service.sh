@@ -4,7 +4,7 @@ set -e
 
 if [ -z "$1" ]; then
   echo "Usage: $0 <service>"
-  echo "Services: backend, frontend"
+  echo "Services: backend, frontend, payment-service"
   exit 1
 fi
 
@@ -29,9 +29,13 @@ case "$SERVICE" in
     DOCKERFILE="apps/frontend/Dockerfile"
     IMAGE_NAME="frontend"
     ;;
+  payment-service)
+    DOCKERFILE="apps/payment-service/Dockerfile"
+    IMAGE_NAME="payment-service"
+    ;;
   *)
     echo "Unknown service: $SERVICE"
-    echo "Available services: backend, frontend"
+    echo "Available services: backend, frontend, payment-service"
     exit 1
     ;;
 esac

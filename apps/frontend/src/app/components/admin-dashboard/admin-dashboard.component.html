@@ -1,188 +1,152 @@
 <div class="admin-dashboard">
   <h2>🔧 Admin Monitoring Dashboard</h2>
 
+  <!-- Connection Change Notifications -->
+  <div class="notifications-container" *ngIf="connectionChangeNotifications.length > 0">
+    <div
+      class="notification"
+      *ngFor="let notification of connectionChangeNotifications"
+      [class.notification-enter]="true"
+    >
+      <div class="notification-icon">CHANGE</div>
+      <div class="notification-content">
+        <strong>{{ notification.serviceName }}</strong> connection method changed:
+        <span class="method-change">
+          <span class="method-badge method-from">{{ getConnectionMethodLabel(notification.from) }}</span>
+          <span class="arrow">→</span>
+          <span class="method-badge method-to">{{ getConnectionMethodLabel(notification.to) }}</span>
+        </span>
+        <div class="notification-details">
+          <span class="notification-time">{{ notification.timestamp | date:'HH:mm:ss' }}</span>
+          <span class="notification-message">Check service status panel for details</span>
+        </div>
+      </div>
+      <button class="notification-dismiss" (click)="dismissNotification(notification.id)">×</button>
+    </div>
+  </div>
+
   <div class="dashboard-grid">
-    <!-- Service Architecture Visualization -->
-    <div class="visualization-panel">
-      <h3>Service Architecture</h3>
-      <svg class="architecture-diagram" viewBox="0 0 800 500">
-        <!-- Frontend -->
-        <g class="service-node" transform="translate(100, 250)">
-          <circle
-            r="40"
-            [attr.fill]="'#61dafb'"
-            [attr.stroke]="'#333'"
-            stroke-width="3"
-          />
-          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold">
-            Frontend
-          </text>
-          <text text-anchor="middle" dy="60" fill="#333" font-size="12">
-            Angular
-          </text>
-          <text text-anchor="middle" dy="75" fill="#666" font-size="10">
-            Browser
-          </text>
-        </g>
+    <!-- Service Status Boxes -->
+    <div class="services-panel">
+      <h3>Service Status</h3>
 
-        <!-- Backend -->
-        <g class="service-node" transform="translate(400, 250)">
-          <circle
-            r="50"
-            [attr.fill]="getServiceColor(services['backend'])"
-            [attr.stroke]="'#333'"
-            stroke-width="3"
-            [class.pulse]="services['backend'].enabled"
-          />
-          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold">
-            Backend
-          </text>
-          <text text-anchor="middle" dy="70" fill="#333" font-size="12">
-            {{ services['backend'].location }}
-          </text>
-          <text text-anchor="middle" dy="85" fill="#666" font-size="10">
-            {{ getConnectionMethodLabel(services['backend'].connectionMethod) }}
-          </text>
-          <text text-anchor="middle" dy="-65" [attr.fill]="services['backend'].healthy ? '#4caf50' : '#f44336'" font-size="14" font-weight="bold">
-            {{ services['backend'].enabled ? (services['backend'].healthy ? '✓' : '✗') : '○' }}
-          </text>
-        </g>
-
-        <!-- Payment Service -->
-        <g class="service-node" transform="translate(700, 250)">
-          <circle
-            r="50"
-            [attr.fill]="getServiceColor(services['payment-service'])"
-            [attr.stroke]="'#333'"
-            stroke-width="3"
-            [class.pulse]="services['payment-service'].enabled"
-          />
-          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold" font-size="14">
-            Payment
-          </text>
-          <text text-anchor="middle" dy="70" fill="#333" font-size="12">
-            {{ services['payment-service'].location }}
-          </text>
-          <text text-anchor="middle" dy="85" fill="#666" font-size="10">
-            {{ getConnectionMethodLabel(services['payment-service'].connectionMethod) }}
-          </text>
-          <text text-anchor="middle" dy="-65" [attr.fill]="services['payment-service'].healthy ? '#4caf50' : '#f44336'" font-size="14" font-weight="bold">
-            {{ services['payment-service'].enabled ? (services['payment-service'].healthy ? '✓' : '✗') : '○' }}
-          </text>
-        </g>
-
-        <!-- MongoDB -->
-        <g class="service-node" transform="translate(400, 400)">
-          <rect
-            x="-40"
-            y="-30"
-            width="80"
-            height="60"
-            rx="5"
-            fill="#47a248"
-            stroke="#333"
-            stroke-width="2"
-          />
-          <text text-anchor="middle" dy="5" fill="#fff" font-weight="bold">
-            MongoDB
-          </text>
-        </g>
-
-        <!-- Static Connections -->
-        <line
-          x1="140"
-          y1="250"
-          x2="350"
-          y2="250"
-          stroke="#999"
-          stroke-width="2"
-          stroke-dasharray="5,5"
-        />
-        <line
-          x1="450"
-          y1="250"
-          x2="650"
-          y2="250"
-          stroke="#999"
-          stroke-width="2"
-          stroke-dasharray="5,5"
-        />
-        <line
-          x1="400"
-          y1="300"
-          x2="400"
-          y2="370"
-          stroke="#999"
-          stroke-width="2"
-          stroke-dasharray="5,5"
-        />
-
-        <!-- Animated Request Flows -->
-        <g *ngFor="let log of activeRequests | keyvalue">
-          <line
-            [attr.x1]="log.value.source === 'frontend' ? 140 : (log.value.source === 'backend' ? 450 : 650)"
-            [attr.y1]="250"
-            [attr.x2]="log.value.destination === 'backend' ? 350 : (log.value.destination === 'payment-service' ? 650 : 450)"
-            [attr.y2]="250"
-            [attr.stroke]="log.value.status && log.value.status >= 400 ? '#f44336' : '#4caf50'"
-            stroke-width="4"
-            class="request-flow"
-          >
-            <animate
-              attributeName="stroke-opacity"
-              from="1"
-              to="0"
-              dur="2s"
-              repeatCount="1"
-            />
-          </line>
-          <circle
-            [attr.cx]="log.value.source === 'frontend' ? 140 : (log.value.source === 'backend' ? 450 : 650)"
-            [attr.cy]="250"
-            r="8"
-            [attr.fill]="log.value.status && log.value.status >= 400 ? '#f44336' : '#4caf50'"
-            class="request-dot"
-          >
-            <animateMotion
-              [attr.path]="'M 0 0 L ' + ((log.value.destination === 'backend' ? 350 : (log.value.destination === 'payment-service' ? 650 : 450)) - (log.value.source === 'frontend' ? 140 : (log.value.source === 'backend' ? 450 : 650))) + ' 0'"
-              dur="2s"
-              repeatCount="1"
-            />
-            <animate
-              attributeName="opacity"
-              from="1"
-              to="0"
-              dur="2s"
-              repeatCount="1"
-            />
-          </circle>
-        </g>
-      </svg>
-
-      <div class="legend">
-        <h4>Connection Methods:</h4>
-        <div class="legend-items">
-          <div class="legend-item">
-            <div class="legend-color" style="background: #4caf50"></div>
-            <span>Direct</span>
+      <div class="service-boxes">
+        <!-- Frontend Service -->
+        <div class="service-box" [class.service-local]="frontendLocation === 'local'" [class.service-remote]="frontendLocation === 'cloud'">
+          <div class="service-box-header">
+            <h4>Frontend</h4>
+            <span class="service-status-badge status-running">Running</span>
           </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #2196f3"></div>
-            <span>Port Forward</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #9c27b0"></div>
-            <span>Ngrok</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #ff9800"></div>
-            <span>Telepresence</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #999"></div>
-            <span>Disabled</span>
+          <div class="service-box-content">
+            <div class="service-location">
+              <strong>Location:</strong>
+              <span class="location-badge" [class.location-local]="frontendLocation === 'local'" [class.location-cloud]="frontendLocation === 'cloud'">
+                {{ frontendLocation === 'local' ? 'Local' : 'K8s' }}
+              </span>
+            </div>
+            <div class="service-description">
+              {{ getLocationDescription(frontendLocation, 'frontend') }}
+            </div>
           </div>
         </div>
+
+        <!-- Backend Service -->
+        <div class="service-box"
+             [class.service-local]="services['backend'].location === 'local'"
+             [class.service-remote]="services['backend'].location === 'cloud'"
+             [class.connection-changed]="services['backend'].connectionMethodChanged">
+          <div class="service-box-header">
+            <h4>Backend</h4>
+            <span class="service-status-badge"
+                  [class.status-healthy]="services['backend'].enabled && services['backend'].healthy"
+                  [class.status-unhealthy]="services['backend'].enabled && !services['backend'].healthy"
+                  [class.status-disconnected]="!services['backend'].enabled">
+              {{ getServiceStatusLabel(services['backend']) }}
+            </span>
+          </div>
+          <div class="service-box-content">
+            <div class="service-location">
+              <strong>Location:</strong>
+              <span class="location-badge"
+                    [class.location-local]="services['backend'].location === 'local'"
+                    [class.location-cloud]="services['backend'].location === 'cloud'">
+                {{ services['backend'].location === 'local' ? 'Local' : 'K8s' }}
+              </span>
+            </div>
+            <div class="service-connection">
+              <strong>Connection:</strong>
+              <span class="connection-method-badge"
+                    [class.method-changed]="services['backend'].connectionMethodChanged"
+                    [style.background]="getServiceColor(services['backend'])">
+                {{ getConnectionMethodIcon(services['backend'].connectionMethod) }}
+                {{ getConnectionMethodLabel(services['backend'].connectionMethod) }}
+                <span *ngIf="services['backend'].connectionMethodChanged" class="change-badge">CHANGED</span>
+              </span>
+            </div>
+            <div class="service-description">
+              {{ getLocationDescription(services['backend'].location, 'backend') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Service -->
+        <div class="service-box service-remote">
+          <div class="service-box-header">
+            <h4>Payment Service</h4>
+            <span class="service-status-badge"
+                  [class.status-healthy]="services['payment-service'].enabled && services['payment-service'].healthy"
+                  [class.status-unhealthy]="services['payment-service'].enabled && !services['payment-service'].healthy"
+                  [class.status-disconnected]="!services['payment-service'].enabled">
+              {{ getServiceStatusLabel(services['payment-service']) }}
+            </span>
+          </div>
+          <div class="service-box-content">
+            <div class="service-location">
+              <strong>Location:</strong>
+              <span class="location-badge location-cloud">K8s</span>
+            </div>
+            <div class="service-connection">
+              <strong>Connection:</strong>
+              <span class="connection-method-badge" [style.background]="getServiceColor(services['payment-service'])">
+                {{ getConnectionMethodIcon(services['payment-service'].connectionMethod) }}
+                {{ getConnectionMethodLabel(services['payment-service'].connectionMethod) }}
+              </span>
+            </div>
+            <div class="service-description">
+              External service - always runs in Kubernetes
+            </div>
+          </div>
+        </div>
+
+        <!-- MongoDB Service -->
+        <div class="service-box service-remote">
+          <div class="service-box-header">
+            <h4>MongoDB</h4>
+            <span class="service-status-badge status-running">Running</span>
+          </div>
+          <div class="service-box-content">
+            <div class="service-location">
+              <strong>Location:</strong>
+              <span class="location-badge location-cloud">K8s</span>
+            </div>
+            <div class="service-description">
+              Database - always runs in Kubernetes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="connection-methods-info">
+        <h4>Connection Methods:</h4>
+        <ul>
+          <li><strong>Direct:</strong> Direct cluster connection</li>
+          <li><strong>Port Forward:</strong> Local access to K8s service</li>
+          <li><strong>Ngrok:</strong> Public HTTPS tunnel for webhooks</li>
+          <li><strong>Telepresence:</strong> Local debugging with cluster access</li>
+          <li><strong>Waiting for Status:</strong> Backend hasn't reported connection method yet</li>
+          <li><strong>Socket Not Connected:</strong> WebSocket connection not established</li>
+        </ul>
+        <p class="info-note"><strong>Note:</strong> Updates work via Socket.IO even when services are on K8s. Connection method changes are shown with notifications.</p>
       </div>
     </div>
 
@@ -216,15 +180,93 @@
 
       <div class="service-status-list">
         <h4>Service Status:</h4>
-        <div class="status-item" *ngFor="let service of services | keyvalue">
+
+        <!-- Frontend Status -->
+        <div class="status-item">
           <div
             class="status-indicator"
-            [style.background]="service.value.enabled ? (service.value.healthy ? '#4caf50' : '#f44336') : '#999'"
+            [style.background]="'#4caf50'"
           ></div>
           <div class="status-info">
-            <strong>{{ service.value.name }}</strong>
-            <span>{{ service.value.enabled ? (service.value.healthy ? 'Healthy' : 'Unhealthy') : 'Disabled' }}</span>
-            <span class="location-badge">{{ service.value.location }}</span>
+            <strong>Frontend</strong>
+            <span>Running</span>
+            <div class="connection-method-display">
+              <span class="location-badge" [class.location-local]="frontendLocation === 'local'" [class.location-cloud]="frontendLocation === 'cloud'">
+                {{ getLocationLabel(frontendLocation) }}
+              </span>
+              <span class="location-description">
+                {{ getLocationDescription(frontendLocation, 'frontend') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backend Status -->
+        <div
+          class="status-item"
+          [class.connection-changed]="services['backend'].connectionMethodChanged"
+        >
+          <div
+            class="status-indicator"
+            [style.background]="services['backend'].enabled ? (services['backend'].healthy ? '#4caf50' : '#f44336') : '#999'"
+            [class.indicator-pulse]="services['backend'].connectionMethodChanged"
+          ></div>
+          <div class="status-info">
+            <strong>Backend</strong>
+            <span>{{ getServiceStatusLabel(services['backend']) }}</span>
+            <div class="connection-method-display">
+              <span class="location-badge" [class.location-local]="services['backend'].location === 'local'" [class.location-cloud]="services['backend'].location === 'cloud'">
+                {{ getLocationLabel(services['backend'].location) }}
+              </span>
+              <span
+                class="connection-method-badge"
+                [class.method-changed]="services['backend'].connectionMethodChanged"
+                [style.background]="getServiceColor(services['backend'])"
+              >
+                {{ getConnectionMethodIcon(services['backend'].connectionMethod) }}
+                {{ getConnectionMethodLabel(services['backend'].connectionMethod) }}
+                <span *ngIf="services['backend'].connectionMethodChanged" class="change-badge">CHANGED</span>
+              </span>
+              <span class="location-description">
+                {{ getLocationDescription(services['backend'].location, 'backend') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Service Status -->
+        <div class="status-item">
+          <div
+            class="status-indicator"
+            [style.background]="services['payment-service'].enabled ? (services['payment-service'].healthy ? '#4caf50' : '#f44336') : '#999'"
+          ></div>
+          <div class="status-info">
+            <strong>Payment Service</strong>
+            <span>{{ getServiceStatusLabel(services['payment-service']) }}</span>
+            <div class="connection-method-display">
+              <span class="location-badge location-cloud">K8s</span>
+              <span class="location-description">
+                External service - always runs in Kubernetes
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MongoDB Status -->
+        <div class="status-item">
+          <div
+            class="status-indicator"
+            [style.background]="'#4caf50'"
+          ></div>
+          <div class="status-info">
+            <strong>MongoDB</strong>
+            <span>Running</span>
+            <div class="connection-method-display">
+              <span class="location-badge location-cloud">K8s</span>
+              <span class="location-description">
+                Database - always runs in Kubernetes
+              </span>
+            </div>
           </div>
         </div>
       </div>

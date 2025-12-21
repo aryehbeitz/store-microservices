@@ -8,6 +8,17 @@ import { io, Socket } from 'socket.io-client';
 
 interface ServiceInfo extends ServiceStatus {
   socket?: Socket;
+  previousConnectionMethod?: string;
+  connectionMethodChanged?: boolean;
+  changeTimestamp?: Date;
+}
+
+interface ConnectionChangeNotification {
+  serviceName: string;
+  from: string;
+  to: string;
+  timestamp: Date;
+  id: string;
 }
 
 @Component({
@@ -16,6 +27,7 @@ interface ServiceInfo extends ServiceStatus {
   styleUrls: ['./admin-dashboard.component.css'],
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
+  frontendLocation: 'local' | 'cloud' = 'cloud'; // Default to cloud (K8s), will detect if local
   services: { [key: string]: ServiceInfo } = {
     backend: {
       name: 'backend',
@@ -23,13 +35,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       location: 'local',
       connectionMethod: 'none',
       enabled: false,
+      previousConnectionMethod: 'none',
+      connectionMethodChanged: false,
     },
     'payment-service': {
       name: 'payment-service',
       healthy: false,
-      location: 'local',
-      connectionMethod: 'none',
-      enabled: false,
+      location: 'cloud', // Payment is always on K8s
+      connectionMethod: 'direct',
+      enabled: true,
+      previousConnectionMethod: 'direct',
+      connectionMethodChanged: false,
     },
   };
 
@@ -40,9 +56,21 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   };
 
   activeRequests: Map<string, RequestLog> = new Map();
+  connectionChangeNotifications: ConnectionChangeNotification[] = [];
 
   ngOnInit() {
+    this.detectFrontendLocation();
     this.connectToServices();
+  }
+
+  detectFrontendLocation() {
+    // Detect if frontend is running locally (localhost:4200) or on K8s
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      this.frontendLocation = 'local';
+    } else {
+      this.frontendLocation = 'cloud';
+    }
   }
 
   ngOnDestroy() {
@@ -70,10 +98,28 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
 
     backendSocket.on('service-status', (status: ServiceStatus) => {
+      const previousMethod = this.services['backend'].connectionMethod;
+      const newMethod = status.connectionMethod;
+
+      // Detect connection method change
+      if (previousMethod !== newMethod && previousMethod !== 'none') {
+        this.handleConnectionMethodChange('backend', previousMethod, newMethod);
+      }
+
       this.services['backend'] = {
         ...status,
         socket: backendSocket,
+        previousConnectionMethod: previousMethod,
+        connectionMethodChanged: previousMethod !== newMethod && previousMethod !== 'none',
+        changeTimestamp: previousMethod !== newMethod ? new Date() : this.services['backend'].changeTimestamp,
       };
+
+      // Reset change flag after animation duration
+      if (this.services['backend'].connectionMethodChanged) {
+        setTimeout(() => {
+          this.services['backend'].connectionMethodChanged = false;
+        }, 3000);
+      }
     });
 
     backendSocket.on('request-log', (log: RequestLog) => {
@@ -90,10 +136,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.services['backend'].healthy = false;
     });
 
-    // Payment service is now external - no socket connection needed
+    // Payment service is now external - always on K8s
     // The payment dashboard is available at http://REDACTED_IP/
     this.services['payment-service'].enabled = true;
     this.services['payment-service'].healthy = true;
+    this.services['payment-service'].location = 'cloud'; // Always on K8s
+    this.services['payment-service'].connectionMethod = 'direct';
     console.log('Payment service is external - using payment dashboard at http://REDACTED_IP/');
   }
 
@@ -151,10 +199,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   getConnectionMethodLabel(method: string): string {
+    if (method === 'none') {
+      return 'Waiting for Status';
+    }
     return method
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  }
+
+  getServiceStatusLabel(service: ServiceInfo): string {
+    if (!service.enabled) {
+      return 'Socket Not Connected';
+    }
+    if (!service.healthy) {
+      return 'Unhealthy';
+    }
+    return 'Healthy';
   }
 
   getRequestFlowPath(log: RequestLog): string {
@@ -173,5 +234,64 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const toPos = positions[to] || positions['backend'];
 
     return `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
+  }
+
+  handleConnectionMethodChange(serviceName: string, from: string, to: string) {
+    const notification: ConnectionChangeNotification = {
+      serviceName,
+      from,
+      to,
+      timestamp: new Date(),
+      id: Math.random().toString(36).substring(2, 11),
+    };
+
+    this.connectionChangeNotifications.unshift(notification);
+
+    // Keep only last 10 notifications
+    if (this.connectionChangeNotifications.length > 10) {
+      this.connectionChangeNotifications.pop();
+    }
+
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      const index = this.connectionChangeNotifications.findIndex(n => n.id === notification.id);
+      if (index !== -1) {
+        this.connectionChangeNotifications.splice(index, 1);
+      }
+    }, 5000);
+  }
+
+  getConnectionMethodIcon(method: string): string {
+    switch (method) {
+      case 'port-forward':
+        return '🔵';
+      case 'ngrok':
+        return '🟣';
+      case 'telepresence':
+        return '🟠';
+      case 'direct':
+        return '🟢';
+      default:
+        return '⚪';
+    }
+  }
+
+  dismissNotification(id: string) {
+    const index = this.connectionChangeNotifications.findIndex(n => n.id === id);
+    if (index !== -1) {
+      this.connectionChangeNotifications.splice(index, 1);
+    }
+  }
+
+  getLocationLabel(location: 'local' | 'cloud'): string {
+    return location === 'local' ? 'Local' : 'K8s';
+  }
+
+  getLocationDescription(location: 'local' | 'cloud', serviceName: string): string {
+    if (location === 'local') {
+      return 'Running on your machine - code changes are instant';
+    } else {
+      return 'Running in Kubernetes - updates via Socket.IO';
+    }
   }
 }
