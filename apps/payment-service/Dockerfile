@@ -15,7 +15,7 @@ COPY apps/payment-service ./apps/payment-service
 COPY libs ./libs
 
 # Install dependencies
-RUN pnpm ci
+RUN pnpm install --frozen-lockfile
 
 # Build the application
 RUN pnpm exec nx build payment-service
