@@ -29,6 +29,7 @@ interface ConnectionChangeNotification {
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   frontendLocation: 'local' | 'cloud' = 'cloud'; // Default to cloud (K8s), will detect if local
+  frontendConnectionMethod: string = 'direct'; // Frontend connection method
   services: { [key: string]: ServiceInfo } = {
     backend: {
       name: 'backend',
@@ -74,8 +75,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       this.frontendLocation = 'local';
+      this.frontendConnectionMethod = 'local';
     } else {
       this.frontendLocation = 'cloud';
+      this.frontendConnectionMethod = 'direct';
     }
   }
 
@@ -405,6 +408,33 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       return 'Running on your machine - code changes are instant';
     } else {
       return 'Running in Kubernetes - updates via Socket.IO';
+    }
+  }
+
+  getServiceUrl(serviceName: string): string {
+    switch (serviceName) {
+      case 'frontend':
+        if (this.frontendLocation === 'local') {
+          return 'http://localhost:4200';
+        } else {
+          return window.location.origin;
+        }
+      case 'backend':
+        if (this.services['backend'].location === 'local') {
+          return 'http://localhost:3000';
+        } else {
+          // Try to construct from frontend URL, or show generic
+          const frontendUrl = window.location.origin;
+          // If frontend is on a LoadBalancer IP, backend might be on same IP with different port
+          // Or we can show a generic message
+          return `${frontendUrl.replace(/:\d+$/, '')}:3000`; // Replace port with :3000
+        }
+      case 'payment-service':
+        return 'http://REDACTED_IP';
+      case 'mongodb':
+        return 'mongodb:27017 (K8s Internal)';
+      default:
+        return 'N/A';
     }
   }
 }

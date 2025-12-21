@@ -43,6 +43,16 @@
                 {{ frontendLocation === 'local' ? 'Local' : 'K8s' }}
               </span>
             </div>
+            <div class="service-connection">
+              <strong>Connection:</strong>
+              <span class="connection-method-badge" [style.background]="frontendLocation === 'local' ? '#2196f3' : '#4caf50'">
+                {{ frontendLocation === 'local' ? 'Local' : 'Direct' }}
+              </span>
+            </div>
+            <div class="service-url">
+              <strong>Access URL:</strong>
+              <span class="url-display">{{ getServiceUrl('frontend') }}</span>
+            </div>
             <div class="service-description">
               {{ getLocationDescription(frontendLocation, 'frontend') }}
             </div>
@@ -82,6 +92,10 @@
                 <span *ngIf="services['backend'].connectionMethodChanged" class="change-badge">CHANGED</span>
               </span>
             </div>
+            <div class="service-url">
+              <strong>Access URL:</strong>
+              <span class="url-display">{{ getServiceUrl('backend') }}</span>
+            </div>
             <div class="service-description">
               {{ getLocationDescription(services['backend'].location, 'backend') }}
             </div>
@@ -111,6 +125,10 @@
                 {{ getConnectionMethodLabel(services['payment-service'].connectionMethod) }}
               </span>
             </div>
+            <div class="service-url">
+              <strong>Access URL:</strong>
+              <span class="url-display">{{ getServiceUrl('payment-service') }}</span>
+            </div>
             <div class="service-description">
               External service - always runs in Kubernetes
             </div>
@@ -128,6 +146,10 @@
               <strong>Location:</strong>
               <span class="location-badge location-cloud">K8s</span>
             </div>
+            <div class="service-url">
+              <strong>Access URL:</strong>
+              <span class="url-display">{{ getServiceUrl('mongodb') }}</span>
+            </div>
             <div class="service-description">
               Database - always runs in Kubernetes
             </div>
@@ -138,12 +160,13 @@
       <div class="connection-methods-info">
         <h4>Connection Methods:</h4>
         <ul>
-          <li><strong>Direct:</strong> Direct cluster connection</li>
-          <li><strong>Port Forward:</strong> Local access to K8s service</li>
-          <li><strong>Ngrok:</strong> Public HTTPS tunnel for webhooks</li>
-          <li><strong>Telepresence:</strong> Local debugging with cluster access</li>
-          <li><strong>Waiting for Status:</strong> Backend hasn't reported connection method yet</li>
-          <li><strong>Socket Not Connected:</strong> WebSocket connection not established</li>
+          <li><strong>Direct:</strong> Services communicate via internal Kubernetes cluster DNS (e.g., <code>http://backend:3000</code>). Used when all services run in K8s. Webhooks work because services can reach each other via cluster DNS.</li>
+          <li><strong>Port Forward:</strong> Accessing K8s services via <code>localhost</code> port forwarding. Services still run in K8s, but accessed locally. Webhooks may not work unless backend has LoadBalancer or ngrok URL.</li>
+          <li><strong>Ngrok:</strong> Public HTTPS URLs via ngrok tunnels. All services run in K8s, but exposed via ngrok public URLs. Webhooks work because backend has a public HTTPS URL.</li>
+          <li><strong>Telepresence:</strong> Local services intercepted into the cluster. Services run locally but appear as if they're in K8s. Used for local debugging with full cluster integration. Webhooks work because Telepresence makes local services accessible to the cluster.</li>
+          <li><strong>Local:</strong> Service running on your machine (not in K8s). Code changes are instant with hot reload.</li>
+          <li><strong>Waiting for Status:</strong> Backend hasn't reported connection method yet (Socket.IO not connected).</li>
+          <li><strong>Socket Not Connected:</strong> WebSocket connection not established.</li>
         </ul>
         <p class="info-note"><strong>Note:</strong> Updates work via Socket.IO even when services are on K8s. Connection method changes are shown with notifications.</p>
       </div>
