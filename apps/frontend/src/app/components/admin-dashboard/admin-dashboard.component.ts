@@ -58,10 +58,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   activeRequests: Map<string, RequestLog> = new Map();
   connectionChangeNotifications: ConnectionChangeNotification[] = [];
+  private reconnectTimer?: any;
+  private checkInterval?: any;
+  private currentBackendUrl: string = '/';
 
   ngOnInit() {
     this.detectFrontendLocation();
     this.connectToServices();
+    // Periodically check if local services are available
+    this.startServiceCheck();
   }
 
   detectFrontendLocation() {
@@ -75,6 +80,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clear intervals
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+    }
     // Disconnect all sockets
     Object.values(this.services).forEach((service) => {
       if (service.socket) {
@@ -84,36 +96,82 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   connectToServices() {
-    // Connect to backend
-    // When running locally, connect directly to backend URL
-    // When in K8s, nginx proxies /socket.io to backend
-    const socketUrl = this.frontendLocation === 'local'
-      ? environment.backendUrl
-      : '/';
+    // Try to connect to backend
+    // If frontend is local, try local backend first, then fall back to K8s
+    // If frontend is in K8s, always use K8s backend
+    if (this.frontendLocation === 'local') {
+      // Try local backend first
+      this.tryConnectBackend(environment.backendUrl, true);
+    } else {
+      // Frontend is in K8s, use K8s backend
+      this.tryConnectBackend('/', false);
+    }
+
+    // Payment service is now external - always on K8s
+    // The payment dashboard is available at http://REDACTED_IP/
+    this.services['payment-service'].enabled = true;
+    this.services['payment-service'].healthy = true;
+    this.services['payment-service'].location = 'cloud'; // Always on K8s
+    this.services['payment-service'].connectionMethod = 'direct';
+    console.log('Payment service is external - using payment dashboard at http://REDACTED_IP/');
+  }
+
+  tryConnectBackend(socketUrl: string, isLocal: boolean) {
+    // Disconnect existing socket if any
+    if (this.services['backend'].socket) {
+      this.services['backend'].socket.disconnect();
+    }
+
+    this.currentBackendUrl = socketUrl;
     const backendSocket = io(socketUrl, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
+      timeout: 5000, // 5 second timeout
+      reconnection: false, // We'll handle reconnection manually
     });
 
     this.services['backend'].socket = backendSocket;
+    this.services['backend'].location = isLocal ? 'local' : 'cloud';
+
+    // Set connection timeout
+    const connectionTimeout = setTimeout(() => {
+      if (!backendSocket.connected) {
+        console.log(`Failed to connect to ${isLocal ? 'local' : 'K8s'} backend, trying fallback...`);
+        backendSocket.disconnect();
+        
+        // If we tried local and it failed, try K8s
+        if (isLocal && this.frontendLocation === 'local') {
+          this.tryConnectBackend('/', false);
+        }
+      }
+    }, 5000);
 
     backendSocket.on('connect', () => {
-      console.log('Connected to backend socket');
+      clearTimeout(connectionTimeout);
+      console.log(`Connected to ${isLocal ? 'local' : 'K8s'} backend socket`);
       this.services['backend'].enabled = true;
+      this.services['backend'].location = isLocal ? 'local' : 'cloud';
     });
 
     backendSocket.on('service-status', (status: ServiceStatus) => {
       const previousMethod = this.services['backend'].connectionMethod;
       const newMethod = status.connectionMethod;
+      const previousLocation = this.services['backend'].location;
 
       // Detect connection method change
       if (previousMethod !== newMethod && previousMethod !== 'none') {
         this.handleConnectionMethodChange('backend', previousMethod, newMethod);
       }
 
+      // Detect location change
+      if (previousLocation !== status.location && previousLocation !== 'local') {
+        console.log(`Backend location changed: ${previousLocation} -> ${status.location}`);
+      }
+
       this.services['backend'] = {
         ...status,
         socket: backendSocket,
+        location: isLocal ? 'local' : status.location,
         previousConnectionMethod: previousMethod,
         connectionMethodChanged: previousMethod !== newMethod && previousMethod !== 'none',
         changeTimestamp: previousMethod !== newMethod ? new Date() : this.services['backend'].changeTimestamp,
@@ -136,18 +194,68 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
 
     backendSocket.on('disconnect', () => {
-      console.log('Disconnected from backend socket');
+      console.log(`Disconnected from ${isLocal ? 'local' : 'K8s'} backend socket`);
       this.services['backend'].enabled = false;
       this.services['backend'].healthy = false;
+      
+      // If local backend disconnected and we're running locally, try K8s fallback
+      if (isLocal && this.frontendLocation === 'local') {
+        this.reconnectTimer = setTimeout(() => {
+          if (!this.services['backend'].socket?.connected) {
+            console.log('Local backend disconnected, trying K8s backend...');
+            this.tryConnectBackend('/', false);
+          }
+        }, 2000);
+      }
     });
 
-    // Payment service is now external - always on K8s
-    // The payment dashboard is available at http://REDACTED_IP/
-    this.services['payment-service'].enabled = true;
-    this.services['payment-service'].healthy = true;
-    this.services['payment-service'].location = 'cloud'; // Always on K8s
-    this.services['payment-service'].connectionMethod = 'direct';
-    console.log('Payment service is external - using payment dashboard at http://REDACTED_IP/');
+    backendSocket.on('connect_error', (error) => {
+      console.log(`Connection error to ${isLocal ? 'local' : 'K8s'} backend:`, error);
+      clearTimeout(connectionTimeout);
+      
+      // If local backend failed and we're running locally, try K8s
+      if (isLocal && this.frontendLocation === 'local') {
+        this.reconnectTimer = setTimeout(() => {
+          console.log('Local backend unavailable, trying K8s backend...');
+          this.tryConnectBackend('/', false);
+        }, 2000);
+      }
+    });
+  }
+
+  startServiceCheck() {
+    // Check every 5 seconds if local services are available
+    this.checkInterval = setInterval(() => {
+      if (this.frontendLocation === 'local') {
+        // Check if local backend is now available
+        if (!this.services['backend'].socket?.connected) {
+          // Try local backend again with timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          
+          fetch(`${environment.backendUrl}/health`, { 
+            method: 'GET',
+            signal: controller.signal
+          })
+            .then(() => {
+              clearTimeout(timeoutId);
+              // Local backend is available, reconnect
+              if (this.currentBackendUrl !== environment.backendUrl) {
+                console.log('Local backend is now available, reconnecting...');
+                this.tryConnectBackend(environment.backendUrl, true);
+              }
+            })
+            .catch(() => {
+              clearTimeout(timeoutId);
+              // Local backend not available, ensure we're using K8s
+              if (this.currentBackendUrl === environment.backendUrl && !this.services['backend'].socket?.connected) {
+                console.log('Local backend unavailable, using K8s backend...');
+                this.tryConnectBackend('/', false);
+              }
+            });
+        }
+      }
+    }, 5000);
   }
 
   addRequestLog(log: RequestLog) {
