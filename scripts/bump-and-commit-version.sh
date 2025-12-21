@@ -19,23 +19,23 @@ NC='\033[0m' # No Color
 bump_service_version() {
   local service=$1
   echo -e "${BLUE}Bumping version for $service...${NC}"
-  
+
   # Bump the version
   node scripts/bump-version.js "$service"
-  
+
   # Get the new version
   local packageJsonPath="apps/$service/package.json"
   local newVersion=$(node -p "require('./$packageJsonPath').version")
-  
+
   # Stage the package.json change
   git add "$packageJsonPath"
-  
+
   # Commit the version bump
   git commit -m "Bump $service version to $newVersion" || {
     echo -e "${YELLOW}No changes to commit for $service${NC}"
     return 0
   }
-  
+
   echo -e "${GREEN}✓ $service version bumped to $newVersion and committed${NC}"
 }
 
