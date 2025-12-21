@@ -15,12 +15,25 @@ export interface VersionInfo {
   providedIn: 'root'
 })
 export class VersionService {
-  private frontendVersion: string;
+  private frontendVersion: string = '{{VERSION}}';
 
   constructor(private http: HttpClient) {
-    // Get frontend version from package.json at build time
-    // This will be replaced during build
-    this.frontendVersion = '{{VERSION}}';
+    // Version will be injected during build by inject-version.js
+    // If still showing {{VERSION}}, fetch from version.json asset
+    if (this.frontendVersion === '{{VERSION}}') {
+      this.loadVersionFromAsset();
+    }
+  }
+
+  private async loadVersionFromAsset() {
+    try {
+      const response = await fetch('/assets/version.json');
+      const data = await response.json();
+      this.frontendVersion = data.version;
+    } catch (error) {
+      console.warn('Could not load version from asset, using default');
+      this.frontendVersion = 'unknown';
+    }
   }
 
   getFrontendVersion(): string {

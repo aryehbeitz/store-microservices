@@ -83,7 +83,12 @@ echo "Image: $FULL_IMAGE"
 echo "========================================"
 echo ""
 
+# Step 0: Bump version and commit
+echo "Step 0: Bumping version for $SERVICE..."
+./scripts/bump-and-commit-version.sh "$SERVICE"
+
 # Step 1: Build and push the image
+echo ""
 echo "Step 1: Building and pushing $IMAGE_NAME..."
 ./scripts/k8s-build-service.sh "$SERVICE"
 

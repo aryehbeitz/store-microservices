@@ -18,6 +18,10 @@ echo "Use GCR: $USE_GCR"
 echo "========================================"
 echo ""
 
+# Step 0: Bump versions for all services and commit
+echo "Step 0: Bumping versions for all services..."
+./scripts/bump-and-commit-version.sh all
+
 # Export environment variables
 export GCP_PROJECT_ID
 export USE_GCR
