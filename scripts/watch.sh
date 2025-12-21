@@ -88,7 +88,7 @@ echo -e "  Frontend: ${frontend_version}"
 echo -e "  Backend: ${backend_version}"
 echo -e "  Payment Service: ${payment_version}"
 echo -e "\n${YELLOW}Watching for version changes...${NC}"
-echo -e "${YELLOW}Use 'npm run version:<service>' to bump versions${NC}\n"
+echo -e "${YELLOW}Use 'pnpm version:<service>' to bump versions${NC}\n"
 
 # Watch loop
 while true; do

@@ -98,7 +98,7 @@ cd apps/frontend
 
 # Frontend environment.ts already points to http://localhost:3000
 # Start frontend locally
-npm run start:frontend
+pnpm start:frontend
 
 # Frontend will be available at: http://localhost:4200
 ```
@@ -183,7 +183,7 @@ export SERVICE_LOCATION=local
 export BACKEND_PUBLIC_URL=http://<backend-loadbalancer-ip>:3000
 
 # Start backend locally
-npm run start:backend
+pnpm start:backend
 ```
 
 ### Step 3: Demonstrate Live Code Changes
@@ -368,7 +368,7 @@ export PAYMENT_SERVICE_URL=http://payment-api.meetup3.svc.cluster.local:8080
 export BACKEND_PUBLIC_URL=http://backend.meetup3.svc.cluster.local:3000
 
 # Start local backend
-npm run start:backend
+pnpm start:backend
 ```
 
 **Key Point**: "Your local backend is now handling requests from the cluster, but you can debug it locally with breakpoints and hot reload!"
@@ -446,7 +446,7 @@ npm run start:backend
 
 1. **Setup** (1m)
    - Run `./scripts/port-forward.sh` (forwards backend)
-   - Start local frontend: `cd apps/frontend && npm run start:frontend`
+   - Start local frontend: `cd apps/frontend && pnpm start:frontend`
    - Open frontend at http://localhost:4200
    - **Emphasize**: "Frontend runs locally - code changes are live!"
 
@@ -792,7 +792,7 @@ Follow the complete demo flow plus:
 
 # In new terminal, start local frontend:
 cd apps/frontend
-npm run start:frontend
+pnpm start:frontend
 
 # Access
 # Frontend: http://localhost:4200 (local)
@@ -834,7 +834,7 @@ npx nx build backend && nodemon dist/apps/backend/main.js
 
 # Terminal 2 - Frontend:
 cd apps/frontend
-npm run start:frontend
+pnpm start:frontend
 
 # Stop
 ./scripts/stop-port-forward-local-all.sh
@@ -867,7 +867,7 @@ cd apps/backend
 export MONGODB_URI=mongodb://mongodb.meetup3.svc.cluster.local:27017/honey-store
 export PAYMENT_SERVICE_URL=http://payment-api.meetup3.svc.cluster.local:8080
 export BACKEND_PUBLIC_URL=http://backend.meetup3.svc.cluster.local:3000
-npm run start:backend
+pnpm start:backend
 
 # Stop
 ./scripts/stop-telepresence.sh

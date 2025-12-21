@@ -95,7 +95,7 @@
 
 🚀 QUICK START COMMANDS
 ------------------------
-1. npm install
+1. pnpm install
 2. ./scripts/rebuild-dependencies.sh
 3. ./scripts/deploy-changes.sh
 4. ./scripts/port-forward.sh
@@ -160,7 +160,7 @@ Infrastructure:
 Build Tools:
 - Nx Monorepo
 - Webpack
-- npm
+- pnpm
 
 🏗️ ARCHITECTURE
 ----------------

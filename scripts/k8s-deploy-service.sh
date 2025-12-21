@@ -12,6 +12,31 @@ fi
 SERVICE="$1"
 NAMESPACE="${2:-${K8S_NAMESPACE:-meetup3}}"
 
+# Get or set Kubernetes context
+K8S_CONTEXT="${K8S_CONTEXT:-gke_REDACTED_PROJECT_us-east1-b_docker-repo-sandbox}"
+if [ -n "$K8S_CONTEXT" ]; then
+  echo "Setting kubectl context to: $K8S_CONTEXT"
+  kubectl config use-context "$K8S_CONTEXT" || {
+    echo "Error: Failed to switch to context $K8S_CONTEXT"
+    echo "Available contexts:"
+    kubectl config get-contexts
+    exit 1
+  }
+fi
+
+# Verify cluster connectivity
+echo "Verifying cluster connectivity..."
+if ! kubectl cluster-info &>/dev/null; then
+  echo "Error: Cannot connect to Kubernetes cluster"
+  echo "Current context: $(kubectl config current-context 2>/dev/null || echo 'none')"
+  echo ""
+  echo "Troubleshooting:"
+  echo "1. Check your network connection"
+  echo "2. Verify the cluster is running: gcloud container clusters list"
+  echo "3. Update credentials: gcloud container clusters get-credentials <cluster-name> --region <region>"
+  exit 1
+fi
+
 # Get GCP project ID
 PROJECT_ID="${GCP_PROJECT_ID:-}"
 if [ -z "$PROJECT_ID" ]; then
@@ -52,6 +77,7 @@ FULL_IMAGE="$REGISTRY/$IMAGE_NAME:latest"
 echo "========================================"
 echo "Deploying $SERVICE to Kubernetes"
 echo "========================================"
+echo "Context: $(kubectl config current-context 2>/dev/null || echo 'not set')"
 echo "Namespace: $NAMESPACE"
 echo "Image: $FULL_IMAGE"
 echo "========================================"
@@ -64,15 +90,34 @@ echo "Step 1: Building and pushing $IMAGE_NAME..."
 echo ""
 echo "Step 2: Updating deployment to use new image..."
 
+# Check if deployment exists
+if ! kubectl get deployment $DEPLOYMENT_NAME -n "$NAMESPACE" &>/dev/null; then
+  echo "Error: Deployment $DEPLOYMENT_NAME not found in namespace $NAMESPACE"
+  echo "Available deployments:"
+  kubectl get deployments -n "$NAMESPACE"
+  exit 1
+fi
+
 # Update the image in the deployment, which will trigger a rollout
-kubectl set image deployment/$DEPLOYMENT_NAME -n "$NAMESPACE" $IMAGE_NAME=$FULL_IMAGE
+if ! kubectl set image deployment/$DEPLOYMENT_NAME -n "$NAMESPACE" $IMAGE_NAME=$FULL_IMAGE; then
+  echo "Error: Failed to update deployment image"
+  exit 1
+fi
 
 # Ensure imagePullPolicy is Always (for GKE/Artifact Registry)
-kubectl patch deployment $DEPLOYMENT_NAME -n "$NAMESPACE" -p '{"spec":{"template":{"spec":{"containers":[{"name":"'$IMAGE_NAME'","imagePullPolicy":"Always"}]}}}}'
+if ! kubectl patch deployment $DEPLOYMENT_NAME -n "$NAMESPACE" -p '{"spec":{"template":{"spec":{"containers":[{"name":"'$IMAGE_NAME'","imagePullPolicy":"Always"}]}}}}'; then
+  echo "Warning: Failed to set imagePullPolicy, but continuing..."
+fi
 
 echo ""
 echo "Step 3: Waiting for rollout to complete..."
-kubectl rollout status deployment/$DEPLOYMENT_NAME -n "$NAMESPACE" --timeout=300s
+if ! kubectl rollout status deployment/$DEPLOYMENT_NAME -n "$NAMESPACE" --timeout=300s; then
+  echo "Warning: Rollout status check failed or timed out"
+  echo "Checking deployment status manually..."
+  kubectl get deployment $DEPLOYMENT_NAME -n "$NAMESPACE"
+  kubectl get pods -l app=$DEPLOYMENT_NAME -n "$NAMESPACE"
+  exit 1
+fi
 
 echo ""
 echo "✅ $SERVICE deployed successfully!"

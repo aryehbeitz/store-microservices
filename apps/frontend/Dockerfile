@@ -2,8 +2,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Copy package files
-COPY package*.json ./
+COPY package*.json pnpm-lock.yaml* ./
 COPY tsconfig.base.json ./
 COPY nx.json ./
 
@@ -12,10 +15,10 @@ COPY apps/frontend ./apps/frontend
 COPY libs ./libs
 
 # Install dependencies
-RUN npm install
+RUN pnpm ci
 
 # Build the application
-RUN npx nx build frontend --configuration=production
+RUN pnpm exec nx build frontend --configuration=production
 
 # Production stage
 FROM nginx:alpine

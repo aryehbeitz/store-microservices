@@ -79,7 +79,7 @@ start_frontend() {
     echo -e "${BLUE}Starting local frontend...${NC}"
     cd "$(dirname "$0")/.." || exit 1
 
-    npm run start:frontend > /tmp/frontend-local-dev.log 2>&1 &
+    pnpm start:frontend > /tmp/frontend-local-dev.log 2>&1 &
     FRONTEND_PID=$!
     echo $FRONTEND_PID > /tmp/frontend-local-dev.pid
 
@@ -134,7 +134,7 @@ start_backend() {
     export SERVICE_LOCATION=local
 
     # Build and start backend
-    npx nx build backend > /tmp/backend-build.log 2>&1
+    pnpm exec nx build backend > /tmp/backend-build.log 2>&1
     if [ $? -ne 0 ]; then
         echo -e "${RED}✗ Backend build failed. Check /tmp/backend-build.log${NC}"
         return

@@ -249,8 +249,8 @@ kubectl get nodes
 # Navigate to project directory
 cd store-microservices
 
-# Install npm dependencies
-npm install
+# Install dependencies
+pnpm install
 
 # This will take a few minutes...
 ```
@@ -259,7 +259,7 @@ npm install
 
 ```bash
 # List all projects
-npx nx show projects
+pnpm exec nx show projects
 
 # Should show:
 # - frontend
@@ -460,7 +460,7 @@ Enter your choice (1-4):
 1. Run telepresence script and select option 1
 2. In another terminal, run your local backend:
    ```bash
-   npm run start:backend
+   pnpm start:backend
    ```
 3. Your local backend now handles all requests from the cluster!
 
@@ -619,17 +619,17 @@ telepresence uninstall --everything
 telepresence connect
 ```
 
-### Issue: npm install fails
+### Issue: pnpm install fails
 
 ```bash
-# Clear npm cache
-npm cache clean --force
+# Clear pnpm cache
+pnpm store prune
 
 # Remove node_modules and lockfile
-rm -rf node_modules package-lock.json
+rm -rf node_modules pnpm-lock.yaml
 
 # Reinstall
-npm install
+pnpm install
 ```
 
 ---
@@ -685,18 +685,18 @@ docker image prune -a
 
 ```bash
 # List projects
-npx nx show projects
+pnpm exec nx show projects
 
 # Build specific project
-npx nx build backend
+pnpm exec nx build backend
 
 # Serve locally
-npx nx serve frontend
-npx nx serve backend
-npx nx serve payment-service
+pnpm exec nx serve frontend
+pnpm exec nx serve backend
+pnpm exec nx serve payment-service
 
 # Run all builds
-npx nx run-many --target=build --all
+pnpm exec nx run-many --target=build --all
 ```
 
 ---

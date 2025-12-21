@@ -16,7 +16,7 @@ Get the Honey Store up and running in 5 minutes!
 ### Step 1: Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 **Time:** ~2 minutes
@@ -91,8 +91,8 @@ Debug locally while connected to the cluster!
 **Then run local services:**
 ```bash
 # In separate terminals:
-npm run start:backend    # If intercepting backend
-npm run start:payment    # If intercepting payment service
+pnpm start:backend    # If intercepting backend
+pnpm start:payment    # If intercepting payment service
 ```
 
 ---

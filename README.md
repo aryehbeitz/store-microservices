@@ -48,7 +48,7 @@ This is a honey production items and accessories store featuring:
 ### 1. Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Start Kubernetes Cluster
@@ -135,9 +135,9 @@ USE_GCR=false ./scripts/k8s-build-and-deploy.sh minikube meetup3
 ./scripts/k8s-build-service.sh frontend
 
 # Or use npm scripts:
-npm run k8s:build:backend
-npm run k8s:build:frontend
-npm run k8s:build:all
+pnpm k8s:build:backend
+pnpm k8s:build:frontend
+pnpm k8s:build:all
 ```
 
 ### Deploy Only
@@ -154,12 +154,12 @@ npm run k8s:build:all
 
 ```bash
 # Build and redeploy a single service
-npm run k8s:build-deploy:backend
-npm run k8s:build-deploy:frontend
+pnpm k8s:build-deploy:backend
+pnpm k8s:build-deploy:frontend
 
 # Or separately:
-npm run k8s:build:backend
-npm run k8s:deploy:backend
+pnpm k8s:build:backend
+pnpm k8s:deploy:backend
 
 # Or use the script directly:
 ./scripts/k8s-redeploy-service.sh backend
@@ -214,15 +214,15 @@ export GCP_PROJECT_ID=REDACTED_PROJECT
 export K8S_NAMESPACE=meetup3
 
 # Build and deploy services
-npm run k8s:build-deploy:backend
-npm run k8s:build-deploy:frontend
+pnpm k8s:build-deploy:backend
+pnpm k8s:build-deploy:frontend
 
 # Check status
-npm run k8s:status
+pnpm k8s:status
 
 # View logs
-npm run k8s:logs:backend
-npm run k8s:logs:frontend
+pnpm k8s:logs:backend
+pnpm k8s:logs:frontend
 ```
 
 ## 🔄 Development Workflows
@@ -241,18 +241,18 @@ cd apps/backend
 cp env.example env.local
 # Edit env.local with your values, then:
 source env.local
-npm run start:backend
+pnpm start:backend
 
 # OR Option 2: Set variables inline
 MONGODB_URI=mongodb://localhost:27017/honey-store \
 PAYMENT_SERVICE_URL=http://REDACTED_IP \
-npm run start:backend
+pnpm start:backend
 
 # Terminal 3 - Payment Service
-npm run start:payment
+pnpm start:payment
 
 # Terminal 4 - Frontend
-npm run start:frontend
+pnpm start:frontend
 ```
 
 **Access:** http://localhost:4200
@@ -304,8 +304,8 @@ For debugging with Kubernetes + local services:
 # Choose which service to intercept (Backend, Payment Service, or Both)
 
 # In separate terminals, run local services:
-npm run start:backend    # If intercepting backend
-npm run start:payment    # If intercepting payment service
+pnpm start:backend    # If intercepting backend
+pnpm start:payment    # If intercepting payment service
 ```
 
 **Access:** http://localhost:8080 (frontend in K8s)
@@ -440,13 +440,13 @@ store-microservices/
 docker run -p 27017:27017 mongo:7
 
 # Terminal 2 - Backend
-npm run start:backend
+pnpm start:backend
 
 # Terminal 3 - Payment Service
-npm run start:payment
+pnpm start:payment
 
 # Terminal 4 - Frontend
-npm run start:frontend
+pnpm start:frontend
 ```
 
 ### Build Individual Services
