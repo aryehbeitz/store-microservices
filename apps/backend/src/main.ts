@@ -679,6 +679,18 @@ app.delete('/api/orders', async (req, res) => {
   }
 });
 
+// Version endpoint - returns current backend version
+app.get('/api/version', (req, res) => {
+  const packageJson = require('../package.json');
+  res.json({
+    service: 'backend',
+    version: packageJson.version,
+    timestamp: new Date().toISOString(),
+    serviceLocation: SERVICE_LOCATION,
+    connectionMethod: CONNECTION_METHOD,
+  });
+});
+
 // Version update endpoint for watch script
 app.post('/api/version-update', (req, res) => {
   const { service, version } = req.body;

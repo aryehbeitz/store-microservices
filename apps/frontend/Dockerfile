@@ -17,6 +17,9 @@ COPY libs ./libs
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
+# Inject version into build files
+RUN cd apps/frontend && node inject-version.js
+
 # Build the application
 RUN pnpm exec nx build frontend --configuration=production
 
