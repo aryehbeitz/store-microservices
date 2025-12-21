@@ -5,6 +5,7 @@ import {
   ServiceStatus,
 } from '@honey-store/shared/types';
 import { io, Socket } from 'socket.io-client';
+import { environment } from '../../../environments/environment';
 
 interface ServiceInfo extends ServiceStatus {
   socket?: Socket;
@@ -84,8 +85,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   connectToServices() {
     // Connect to backend
-    // Connect to backend Socket.IO (nginx proxies /socket.io to backend)
-    const backendSocket = io('/', {
+    // When running locally, connect directly to backend URL
+    // When in K8s, nginx proxies /socket.io to backend
+    const socketUrl = this.frontendLocation === 'local' 
+      ? environment.backendUrl 
+      : '/';
+    const backendSocket = io(socketUrl, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
     });
