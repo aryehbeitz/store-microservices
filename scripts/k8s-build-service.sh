@@ -46,7 +46,13 @@ REGISTRY_REPO="${ARTIFACT_REGISTRY_REPO:-docker-repo}"
 REGISTRY="us-east1-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPO"
 
 echo "Building and pushing $IMAGE_NAME to Artifact Registry..."
-docker buildx build --platform linux/amd64 -f "$DOCKERFILE" -t "$REGISTRY/$IMAGE_NAME:latest" --push .
+# Use --no-cache to ensure fresh build (can be disabled by setting DOCKER_NO_CACHE=false)
+NO_CACHE_FLAG=""
+if [ "${DOCKER_NO_CACHE:-true}" != "false" ]; then
+  NO_CACHE_FLAG="--no-cache"
+  echo "Building without cache to ensure latest code is included..."
+fi
+docker buildx build $NO_CACHE_FLAG --platform linux/amd64 -f "$DOCKERFILE" -t "$REGISTRY/$IMAGE_NAME:latest" --push .
 
 echo "✅ $IMAGE_NAME built and pushed successfully!"
 
