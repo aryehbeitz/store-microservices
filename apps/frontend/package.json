@@ -1,6 +1,6 @@
 {
   "name": "honey-store-frontend",
-  "version": "1.0.3-2025-12-23",
+  "version": "1.0.4-2025-12-23",
   "description": "Honey Store Frontend Application",
   "main": "src/main.ts",
   "scripts": {
