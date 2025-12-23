@@ -110,13 +110,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.tryConnectBackend('/', false);
     }
 
-    // Payment service is now external - always on K8s
-    // The payment dashboard is available at http://REDACTED_IP/
+    // Payment service is external - always on K8s
     this.services['payment-service'].enabled = true;
     this.services['payment-service'].healthy = true;
     this.services['payment-service'].location = 'cloud'; // Always on K8s
     this.services['payment-service'].connectionMethod = 'direct';
-    console.log('Payment service is external - using payment dashboard at http://REDACTED_IP/');
+    console.log('Payment service is external');
   }
 
   tryConnectBackend(socketUrl: string, isLocal: boolean) {
@@ -430,7 +429,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           return `${frontendUrl.replace(/:\d+$/, '')}:3000`; // Replace port with :3000
         }
       case 'payment-service':
-        return 'http://REDACTED_IP';
+        return 'http://payment-service:3002 (K8s Internal)';
       case 'mongodb':
         return 'mongodb:27017 (K8s Internal)';
       default:

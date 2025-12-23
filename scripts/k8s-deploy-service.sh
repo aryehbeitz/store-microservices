@@ -2,6 +2,14 @@
 
 set -e
 
+# Load local configuration if it exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+  echo "Loading configuration from .env.local..."
+  export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 if [ -z "$1" ]; then
   echo "Usage: $0 <service> [namespace]"
   echo "Services: backend, frontend, payment-service"
@@ -13,7 +21,7 @@ SERVICE="$1"
 NAMESPACE="${2:-${K8S_NAMESPACE:-meetup3}}"
 
 # Get or set Kubernetes context
-K8S_CONTEXT="${K8S_CONTEXT:-gke_REDACTED_PROJECT_us-east1-b_docker-repo-sandbox}"
+K8S_CONTEXT="${K8S_CONTEXT}"
 if [ -n "$K8S_CONTEXT" ]; then
   echo "Setting kubectl context to: $K8S_CONTEXT"
   kubectl config use-context "$K8S_CONTEXT" || {

@@ -2,11 +2,32 @@
 
 set -e
 
+# Load local configuration if it exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+  echo "Loading configuration from .env.local..."
+  export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 # Configuration
-GCP_PROJECT_ID="${GCP_PROJECT_ID:-REDACTED_PROJECT}"
-K8S_CONTEXT="${K8S_CONTEXT:-gke_REDACTED_PROJECT_us-east1-b_docker-repo-sandbox}"
-K8S_NAMESPACE="${K8S_NAMESPACE:-meetup3}"
+GCP_PROJECT_ID="${GCP_PROJECT_ID}"
+K8S_CONTEXT="${K8S_CONTEXT}"
+K8S_NAMESPACE="${K8S_NAMESPACE:-default}"
 USE_GCR="${USE_GCR:-true}"
+
+# Validate required configuration
+if [ -z "$GCP_PROJECT_ID" ] || [ -z "$K8S_CONTEXT" ]; then
+  echo "❌ Error: Required configuration missing!"
+  echo ""
+  echo "Please run: ./scripts/setup-local-config.sh"
+  echo ""
+  echo "Or set environment variables manually:"
+  echo "  export GCP_PROJECT_ID=your-project-id"
+  echo "  export K8S_CONTEXT=your-k8s-context"
+  echo "  export K8S_NAMESPACE=your-namespace"
+  exit 1
+fi
 
 echo "========================================"
 echo "Deploying to Kubernetes"

@@ -25,8 +25,23 @@ spec:
           env:
             - name: PORT
               value: "3000"
+            - name: MONGODB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongodb-root-username
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongodb-root-password
+            - name: MONGODB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongodb-database
             - name: MONGODB_URI
-              value: "mongodb://mongodb:27017/honey-store"
+              value: "mongodb://$(MONGODB_USERNAME):$(MONGODB_PASSWORD)@mongodb:27017/$(MONGODB_DATABASE)?authSource=admin"
             - name: PAYMENT_SERVICE_URL
               value: "http://payment-api:8080"
             - name: BACKEND_PUBLIC_URL
@@ -35,6 +50,8 @@ spec:
               value: "cloud"
             - name: CONNECTION_METHOD
               value: "direct"
+            - name: ALLOWED_ORIGINS
+              value: "http://localhost:4200,https://yourdomain.com"
           resources:
             requests:
               memory: "256Mi"
@@ -63,7 +80,7 @@ metadata:
   labels:
     app: backend
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 3000
       targetPort: 3000

@@ -34,8 +34,21 @@ spec:
             - containerPort: 27017
               name: mongodb
           env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongodb-root-username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongodb-root-password
             - name: MONGO_INITDB_DATABASE
-              value: honey-store
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongodb-database
           volumeMounts:
             - name: mongodb-storage
               mountPath: /data/db

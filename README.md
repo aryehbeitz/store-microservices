@@ -187,9 +187,9 @@ pnpm k8s:deploy:backend
 For Google Kubernetes Engine (GKE), set environment variables:
 
 ```bash
-export GCP_PROJECT_ID=REDACTED_PROJECT
+export GCP_PROJECT_ID=your-project-id
 export USE_GCR=true  # Optional, defaults to true
-export K8S_NAMESPACE=meetup3  # Optional, defaults to meetup3 for npm scripts
+export K8S_NAMESPACE=your-namespace  # Required
 
 # Then run:
 ./scripts/k8s-build-and-deploy.sh <context> <namespace>
@@ -198,7 +198,7 @@ export K8S_NAMESPACE=meetup3  # Optional, defaults to meetup3 for npm scripts
 Optional environment variables:
 - `ARTIFACT_REGISTRY_LOCATION` - defaults to `us-east1`
 - `ARTIFACT_REGISTRY_REPO` - defaults to `docker-repo`
-- `K8S_NAMESPACE` - defaults to `meetup3` for npm scripts
+- `K8S_NAMESPACE` - required for deployment
 
 The scripts will automatically:
 - Detect GKE contexts (`gke_*`)
@@ -211,8 +211,8 @@ The scripts will automatically:
 
 ```bash
 # Set environment variables once
-export GCP_PROJECT_ID=REDACTED_PROJECT
-export K8S_NAMESPACE=meetup3
+export GCP_PROJECT_ID=your-project-id
+export K8S_NAMESPACE=your-namespace
 
 # Build and deploy services
 pnpm k8s:build-deploy:backend
@@ -246,7 +246,7 @@ pnpm start:backend
 
 # OR Option 2: Set variables inline
 MONGODB_URI=mongodb://localhost:27017/honey-store \
-PAYMENT_SERVICE_URL=http://REDACTED_IP \
+PAYMENT_SERVICE_URL=http://your-payment-service-url \
 pnpm start:backend
 
 # Terminal 3 - Payment Service

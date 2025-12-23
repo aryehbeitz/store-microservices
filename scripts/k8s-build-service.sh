@@ -2,6 +2,14 @@
 
 set -e
 
+# Load local configuration if it exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+  echo "Loading configuration from .env.local..."
+  export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 if [ -z "$1" ]; then
   echo "Usage: $0 <service>"
   echo "Services: backend, frontend, payment-service"

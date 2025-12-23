@@ -2,6 +2,14 @@
 
 set -e
 
+# Load local configuration if it exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+  echo "Loading configuration from .env.local..."
+  export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 # Check if GCR registry should be used (default: true for GKE)
 USE_GCR="${USE_GCR:-true}"
 PROJECT_ID="${GCP_PROJECT_ID:-}"
