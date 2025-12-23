@@ -56,6 +56,10 @@ export USE_GCR
 echo ""
 echo "✅ Deployment complete!"
 echo ""
+
+# Update service IPs in .env.local
+./scripts/update-env-ips.sh "$K8S_NAMESPACE"
+
 echo "To check status: kubectl get pods -n $K8S_NAMESPACE"
 echo "To view logs: kubectl logs -f <pod-name> -n $K8S_NAMESPACE"
 

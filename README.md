@@ -60,6 +60,8 @@ This will:
 - Generate a strong MongoDB password (or let you enter your own)
 - Save everything to `.env.local` (automatically gitignored)
 
+After deployment, service IPs are automatically detected and saved to `.env.local`
+
 ### 2. Install Dependencies
 
 ```bash

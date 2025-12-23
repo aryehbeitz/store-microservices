@@ -105,6 +105,9 @@ kubectl get services
 
 echo -e "\n${GREEN}✓ All services deployed successfully${NC}"
 
+# Update service IPs in .env.local
+"$SCRIPT_DIR/update-env-ips.sh" "${K8S_NAMESPACE:-default}"
+
 echo -e "\n${YELLOW}Next steps:${NC}"
 echo "1. Run './scripts/port-forward.sh' to access services locally"
 echo "2. Run './scripts/ngrok-start.sh' for webhook demo with real-time updates"
