@@ -191,6 +191,45 @@ else
 fi
 echo ""
 
+# 4. MongoDB Configuration
+echo "========================================"
+echo "Step 4: MongoDB Credentials"
+echo "========================================"
+echo ""
+
+echo "Generate MongoDB password options:"
+echo "  1) Auto-generate strong password (recommended)"
+echo "  2) Enter your own password"
+echo ""
+read -p "Choose option (1 or 2): " mongo_option
+
+if [ "$mongo_option" = "2" ]; then
+    read -s -p "Enter MongoDB password: " mongo_password
+    echo ""
+    read -s -p "Confirm password: " mongo_password_confirm
+    echo ""
+
+    if [ "$mongo_password" != "$mongo_password_confirm" ]; then
+        echo "❌ Passwords don't match!"
+        exit 1
+    fi
+else
+    # Auto-generate strong password
+    mongo_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
+    echo "✓ Generated strong password (32 characters)" >&2
+fi
+
+# MongoDB username
+read -p "MongoDB username (admin): " mongo_username
+mongo_username="${mongo_username:-admin}"
+
+echo "MONGODB_USERNAME=$mongo_username" >> "$ENV_FILE"
+echo "MONGODB_PASSWORD=$mongo_password" >> "$ENV_FILE"
+echo "MONGODB_DATABASE=honey-store" >> "$ENV_FILE"
+echo "✓ MongoDB credentials saved to .env.local" >&2
+
+echo ""
+
 # Set default values for Artifact Registry
 echo "ARTIFACT_REGISTRY_LOCATION=us-east1" >> "$ENV_FILE"
 echo "ARTIFACT_REGISTRY_REPO=docker-repo" >> "$ENV_FILE"

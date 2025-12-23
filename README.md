@@ -46,13 +46,27 @@ This is a honey production items and accessories store featuring:
 - Minikube or K3s
 - kubectl
 
-### 1. Install Dependencies
+### 1. Configure Your Environment
+
+```bash
+# Run interactive setup to configure GCP, K8s, and MongoDB credentials
+./scripts/setup-local-config.sh
+```
+
+This will:
+- Detect and let you select your GCP project
+- Detect and let you select your K8s context
+- Detect and let you select your namespace
+- Generate a strong MongoDB password (or let you enter your own)
+- Save everything to `.env.local` (automatically gitignored)
+
+### 2. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 2. Start Kubernetes Cluster
+### 3. Start Kubernetes Cluster
 
 ```bash
 ./scripts/build-and-deploy.sh

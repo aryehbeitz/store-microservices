@@ -11,6 +11,22 @@ echo -e "${BLUE}======================================${NC}"
 echo -e "${BLUE}  Honey Store - Build & Deploy       ${NC}"
 echo -e "${BLUE}======================================${NC}"
 
+# Load local configuration if it exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+  echo -e "${YELLOW}Loading configuration from .env.local...${NC}"
+  export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
+# Check if using configured GKE context
+if [ -n "$K8S_CONTEXT" ] && [[ "$K8S_CONTEXT" == gke_* ]]; then
+    echo -e "${GREEN}Using configured GKE context: $K8S_CONTEXT${NC}"
+    echo -e "${YELLOW}Redirecting to GKE deployment script...${NC}"
+    echo ""
+    exec "$SCRIPT_DIR/deploy.sh"
+fi
+
 # Generate unique timestamp for image tags
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 echo -e "${YELLOW}Using timestamp: $TIMESTAMP${NC}"
@@ -18,7 +34,7 @@ echo -e "${YELLOW}Using timestamp: $TIMESTAMP${NC}"
 # Store timestamp for potential future use
 echo "$TIMESTAMP" > .docker-timestamp
 
-# Detect Kubernetes cluster
+# Detect local Kubernetes cluster
 if command -v minikube &> /dev/null && minikube status &> /dev/null; then
     echo -e "${GREEN}Using Minikube${NC}"
     eval $(minikube docker-env)
@@ -26,10 +42,15 @@ elif command -v k3d &> /dev/null && k3d cluster list | grep -q "honey-store"; th
     echo -e "${GREEN}Using K3d${NC}"
     eval $(k3d kubeconfig get honey-store)
 else
-    echo -e "${RED}No supported Kubernetes cluster found!${NC}"
-    echo "Please start Minikube or K3d first:"
-    echo "  Minikube: minikube start"
-    echo "  K3d: k3d cluster create honey-store"
+    echo -e "${RED}No Kubernetes cluster configured!${NC}"
+    echo ""
+    echo "Options:"
+    echo "  1. Configure GKE/cloud cluster:"
+    echo "     ./scripts/setup-local-config.sh"
+    echo ""
+    echo "  2. Start local cluster:"
+    echo "     Minikube: minikube start"
+    echo "     K3d: k3d cluster create honey-store"
     exit 1
 fi
 

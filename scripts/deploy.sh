@@ -47,6 +47,9 @@ echo "Step 0: Bumping versions for all services..."
 export GCP_PROJECT_ID
 export USE_GCR
 
+# Apply secrets before deploying
+./scripts/k8s-apply-secrets.sh "$K8S_NAMESPACE"
+
 # Run the build and deploy script
 ./scripts/k8s-build-and-deploy.sh "$K8S_CONTEXT" "$K8S_NAMESPACE"
 

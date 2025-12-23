@@ -74,6 +74,10 @@ fi
 echo "Creating namespace: $NAMESPACE"
 kubectl create namespace "$NAMESPACE" || true
 
+# Apply secrets from .env.local
+echo "Applying secrets..."
+"$SCRIPT_DIR/k8s-apply-secrets.sh" "$NAMESPACE"
+
 # Deploy MongoDB
 echo "Deploying MongoDB..."
 SED_CMD="s/namespace: payment-system/namespace: $NAMESPACE/g"
