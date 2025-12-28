@@ -6,6 +6,9 @@
     "start:frontend": "nx serve frontend",
     "start:backend": "nx serve backend",
     "start:payment": "nx serve payment-service",
+    "frontend:use-local": "./scripts/frontend-use-local.sh",
+    "frontend:use-k8s": "./scripts/frontend-use-k8s.sh",
+    "frontend:use-k8s-direct": "./scripts/frontend-use-k8s-direct.sh",
     "build": "nx affected --target=build --parallel=3 --base=master",
     "build:all": "nx run-many --target=build --all --parallel=3",
     "build:status": "nx show projects --affected --type=app",
@@ -14,7 +17,9 @@
     "build-and-deploy": "./scripts/build-and-deploy.sh",
     "port-forward": "./scripts/port-forward.sh",
     "ngrok:start": "./scripts/ngrok-start.sh",
+    "ngrok:stop": "./scripts/stop-ngrok.sh",
     "telepresence:start": "./scripts/telepresence-start.sh",
+    "telepresence:stop": "telepresence quit",
     "version:frontend": "cd apps/frontend && pnpm version:bump",
     "version:backend": "cd apps/backend && pnpm version:bump",
     "version:payment": "cd apps/payment-service && pnpm version:bump",
@@ -38,7 +43,8 @@
     "deploy": "./scripts/deploy.sh",
     "k8s:status": "kubectl get pods -n ${K8S_NAMESPACE:-meetup3}",
     "k8s:logs:backend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=backend --tail=50 -f",
-    "k8s:logs:frontend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=frontend --tail=50 -f"
+    "k8s:logs:frontend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=frontend --tail=50 -f",
+    "k8s:reset": "kubectl set env deployment/backend -n ${K8S_NAMESPACE:-meetup3} CONNECTION_METHOD=direct && kubectl rollout restart deployment/backend -n ${K8S_NAMESPACE:-meetup3}"
   },
   "private": true,
   "dependencies": {

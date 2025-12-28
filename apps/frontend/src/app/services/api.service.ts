@@ -18,33 +18,33 @@ export class ApiService {
 
   createOrder(orderData: CreateOrderRequest): Observable<CreateOrderResponse> {
     return this.http.post<CreateOrderResponse>(
-      `${this.backendUrl}/orders`,
+      `${this.backendUrl}/api/orders`,
       orderData
     );
   }
 
   getOrder(orderId: string): Observable<Order> {
-    return this.http.get<Order>(`${this.backendUrl}/orders/${orderId}`);
+    return this.http.get<Order>(`${this.backendUrl}/api/orders/${orderId}`);
   }
 
   getAllOrders(): Observable<{ orders: Order[]; connectionInfo: any }> {
-    return this.http.get<{ orders: Order[]; connectionInfo: any }>(`${this.backendUrl}/orders`);
+    return this.http.get<{ orders: Order[]; connectionInfo: any }>(`${this.backendUrl}/api/orders`);
   }
 
   getConnectionInfo(): Observable<any> {
-    return this.http.get<any>(`${this.backendUrl}/connection-info`);
+    return this.http.get<any>(`${this.backendUrl}/api/connection-info`);
   }
 
   retryPayment(orderId: string): Observable<{ message: string; orderId: string; status: string }> {
     return this.http.post<{ message: string; orderId: string; status: string }>(
-      `${this.backendUrl}/orders/${orderId}/retry-payment`,
+      `${this.backendUrl}/api/orders/${orderId}/retry-payment`,
       {}
     );
   }
 
   clearAllOrders(): Observable<{ message: string; deletedCount: number }> {
     return this.http.delete<{ message: string; deletedCount: number }>(
-      `${this.backendUrl}/orders`
+      `${this.backendUrl}/api/orders`
     );
   }
 }

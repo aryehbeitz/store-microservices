@@ -14,16 +14,16 @@ export class ProductService {
 
   getProducts(category?: string): Observable<Product[]> {
     const url = category && category !== 'all'
-      ? `${this.backendUrl}/products?category=${category}`
-      : `${this.backendUrl}/products`;
+      ? `${this.backendUrl}/api/products?category=${category}`
+      : `${this.backendUrl}/api/products`;
     return this.http.get<Product[]>(url);
   }
 
   getProductById(id: string): Observable<Product> {
-    return this.http.get<Product>(`${this.backendUrl}/products/${id}`);
+    return this.http.get<Product>(`${this.backendUrl}/api/products/${id}`);
   }
 
   getProductsByCategory(category: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.backendUrl}/products?category=${category}`);
+    return this.http.get<Product[]>(`${this.backendUrl}/api/products?category=${category}`);
   }
 }
