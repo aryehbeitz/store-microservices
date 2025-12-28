@@ -2,36 +2,16 @@
   <div class="orders-header">
     <div class="header-left">
       <h1>My Orders</h1>
-      <div *ngIf="connectionInfo" class="connection-info">
-        <div class="connection-method">
-          <span class="method-label">Connection:</span>
-          <span class="method-badge" [ngClass]="getConnectionMethodClass()">
-            {{ getConnectionMethodDisplay() }}
-          </span>
-        </div>
-        <div class="webhook-status">
-          <span class="webhook-label">Webhooks:</span>
-          <span class="webhook-badge" [ngClass]="getWebhookStatusClass()">
-            {{ getWebhookStatusText() }}
-          </span>
-        </div>
-        <div *ngIf="!realTimeUpdates" class="webhook-warning">
-          ⚠️ Orders won't update automatically with port forwarding
-        </div>
-        <div *ngIf="realTimeUpdates" class="webhook-success">
-          ✅ Orders update in real-time via webhooks
-        </div>
-      </div>
-      <div class="header-right">
-        <button
-          *ngIf="orders.length > 0"
-          class="clear-all-btn"
-          (click)="clearAllOrders()"
-          [disabled]="loading"
-        >
-          🗑️ Clear All Orders
-        </button>
-      </div>
+    </div>
+    <div class="header-right">
+      <button
+        *ngIf="orders.length > 0"
+        class="clear-all-btn"
+        (click)="clearAllOrders()"
+        [disabled]="loading"
+      >
+        🗑️ Clear All Orders
+      </button>
     </div>
   </div>
 

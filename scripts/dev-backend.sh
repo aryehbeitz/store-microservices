@@ -42,7 +42,18 @@ fi
 export MONGODB_URI="mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@localhost:27017/${MONGODB_DATABASE}?authSource=admin"
 export PAYMENT_SERVICE_URL=${PAYMENT_SERVICE_URL:-http://localhost:8082}
 export SERVICE_LOCATION=local
-export CONNECTION_METHOD=local
+
+# Check if ngrok is running and get the public URL
+NGROK_URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"https://[^"]*' | cut -d'"' -f4 | head -1)
+if [ -n "$NGROK_URL" ]; then
+    export BACKEND_PUBLIC_URL="$NGROK_URL"
+    export CONNECTION_METHOD=ngrok
+    echo "✅ Ngrok detected: $NGROK_URL"
+else
+    export CONNECTION_METHOD=local
+    echo "⚠️  Ngrok not detected - webhooks will not work"
+    echo "   Start ngrok in another terminal: pnpm dev:ngrok"
+fi
 
 echo "🔌 Setting up dependencies..."
 echo "   MongoDB: Port-forwarding to K8s..."

@@ -13,7 +13,6 @@ export class OrdersComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   retryingPayment: { [orderId: string]: boolean } = {};
-  connectionInfo: any = null;
   realTimeUpdates = false;
   private socket: Socket | null = null;
 
@@ -36,8 +35,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.apiService.getAllOrders().subscribe({
       next: (response) => {
         this.orders = response.orders;
-        this.connectionInfo = response.connectionInfo;
-        this.realTimeUpdates = response.connectionInfo.canReceiveWebhooks;
+        this.realTimeUpdates = response.connectionInfo?.canReceiveWebhooks || false;
         this.loading = false;
 
         // Set up real-time updates if webhooks are enabled
@@ -131,26 +129,6 @@ export class OrdersComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit'
     });
-  }
-
-  getConnectionMethodDisplay(): string {
-    if (!this.connectionInfo) return 'Unknown';
-    return this.connectionInfo.method.replace('-', ' ').toUpperCase();
-  }
-
-  getConnectionMethodClass(): string {
-    if (!this.connectionInfo) return 'connection-unknown';
-    return `connection-${this.connectionInfo.method}`;
-  }
-
-  getWebhookStatusText(): string {
-    if (!this.connectionInfo) return 'Unknown';
-    return this.connectionInfo.canReceiveWebhooks ? 'Webhooks Enabled' : 'Webhooks Disabled';
-  }
-
-  getWebhookStatusClass(): string {
-    if (!this.connectionInfo) return 'webhook-unknown';
-    return this.connectionInfo.canReceiveWebhooks ? 'webhook-enabled' : 'webhook-disabled';
   }
 
   private setupRealTimeUpdates(): void {

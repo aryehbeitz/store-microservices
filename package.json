@@ -47,7 +47,8 @@
     "k8s:reset": "kubectl set env deployment/backend -n ${K8S_NAMESPACE:-meetup3} CONNECTION_METHOD=direct && kubectl rollout restart deployment/backend -n ${K8S_NAMESPACE:-meetup3}",
     "verify": "./scripts/verify-deployment.sh",
     "dev:frontend": "./scripts/dev-frontend.sh",
-    "dev:backend": "./scripts/dev-backend.sh"
+    "dev:backend": "./scripts/dev-backend.sh",
+    "dev:ngrok": "./scripts/dev-ngrok.sh"
   },
   "private": true,
   "dependencies": {
