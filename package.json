@@ -44,7 +44,10 @@
     "k8s:status": "kubectl get pods -n ${K8S_NAMESPACE:-meetup3}",
     "k8s:logs:backend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=backend --tail=50 -f",
     "k8s:logs:frontend": "kubectl logs -n ${K8S_NAMESPACE:-meetup3} -l app=frontend --tail=50 -f",
-    "k8s:reset": "kubectl set env deployment/backend -n ${K8S_NAMESPACE:-meetup3} CONNECTION_METHOD=direct && kubectl rollout restart deployment/backend -n ${K8S_NAMESPACE:-meetup3}"
+    "k8s:reset": "kubectl set env deployment/backend -n ${K8S_NAMESPACE:-meetup3} CONNECTION_METHOD=direct && kubectl rollout restart deployment/backend -n ${K8S_NAMESPACE:-meetup3}",
+    "verify": "./scripts/verify-deployment.sh",
+    "dev:frontend": "./scripts/dev-frontend.sh",
+    "dev:backend": "./scripts/dev-backend.sh"
   },
   "private": true,
   "dependencies": {
@@ -56,13 +59,13 @@
     "@angular/platform-browser": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
     "@angular/router": "^17.0.0",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "mongoose": "^8.0.0",
+    "rxjs": "^7.8.0",
     "socket.io": "^4.6.0",
     "socket.io-client": "^4.6.0",
-    "cors": "^2.8.5",
-    "axios": "^1.6.0",
-    "rxjs": "^7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "^0.14.2"
   },
@@ -74,18 +77,18 @@
     "@angular/compiler-cli": "^17.0.0",
     "@nx/angular": "^18.0.0",
     "@nx/express": "^18.0.0",
-    "@nx/node": "^18.0.0",
+    "@nx/js": "^18.0.0",
+    "@nx/node": "^18.3.5",
     "@nx/webpack": "^18.0.0",
     "@nx/workspace": "^18.0.0",
-    "@nx/js": "^18.0.0",
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.0",
-    "@types/cors": "^2.8.17",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
     "eslint": "^8.55.0",
     "nx": "^18.0.0",
-    "typescript": "~5.4.5",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "~5.4.5"
   }
 }

@@ -85,7 +85,7 @@ importers:
         specifier: ^18.0.0
         version: 18.3.5(@babel/traverse@7.28.5)(@types/node@20.19.27)(nx@18.3.5)(typescript@5.4.5)
       '@nx/node':
-        specifier: ^18.0.0
+        specifier: ^18.3.5
         version: 18.3.5(@babel/traverse@7.28.5)(@types/node@20.19.27)(js-yaml@4.1.0)(nx@18.3.5)(ts-node@10.9.2(@types/node@20.19.27)(typescript@5.4.5))(typescript@5.4.5)
       '@nx/webpack':
         specifier: ^18.0.0
