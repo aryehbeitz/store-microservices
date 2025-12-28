@@ -33,7 +33,7 @@
       <div class="product-image">
         <img [src]="product?.imageUrl" [alt]="product?.name" />
         <span class="badge" [class.out-of-stock]="!product?.inStock">
-          {{ product?.inStock ? 'In Stock' : 'Out of Stock' }}
+          {{ product?.inStock ? "In Stock" : "Out of Stock" }}
         </span>
       </div>
       <div class="product-info">
@@ -48,7 +48,7 @@
             [disabled]="!product?.inStock"
             [class.added]="addedToCartId === product?.id"
           >
-            {{ addedToCartId === product?.id ? '✓ Added' : 'Add to Cart' }}
+            {{ addedToCartId === product?.id ? "✓ Added" : "Add to Cart" }}
           </button>
         </div>
       </div>

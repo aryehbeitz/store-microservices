@@ -7,6 +7,10 @@ set -e
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Backend Development Mode"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "ℹ️  Other available commands:"
+echo "   • pnpm dev:frontend - Start frontend with K8s backend"
+echo "   • pnpm dev:ngrok - Start ngrok for webhooks (if needed)"
+echo "   • pnpm debug:payment - Debug payment service with Telepresence"
 echo ""
 
 # Check if frontend is running
@@ -20,6 +24,11 @@ if ! lsof -i:4200 > /dev/null 2>&1; then
 fi
 
 echo "✅ Frontend is running on port 4200"
+echo ""
+
+# Scale down K8s backend so it doesn't receive webhooks
+echo "🔽 Scaling down K8s backend..."
+kubectl scale deployment backend -n meetup3 --replicas=0 2>/dev/null || echo "   (K8s backend may already be scaled down)"
 echo ""
 
 # Configure frontend to use local backend

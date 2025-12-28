@@ -9,6 +9,9 @@ NAMESPACE="${K8S_NAMESPACE:-meetup3}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Frontend Development Mode"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "ℹ️  Other available commands:"
+echo "   • pnpm dev:backend - Debug backend locally"
+echo "   • pnpm debug:payment - Debug payment service with Telepresence"
 echo ""
 
 # 1. Configure frontend to use K8s backend

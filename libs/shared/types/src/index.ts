@@ -48,10 +48,18 @@ export interface CreateOrderResponse {
 
 // Payment Types
 export interface PaymentRequest {
-  orderId: string;
-  amount: number;
-  customerEmail: string;
   webhook_url: string;
+  sleep?: number;
+  data?: {
+    orderId: string;
+    amount: number;
+    currency: string;
+    customerEmail: string;
+  };
+  // Legacy fields (kept for backwards compatibility)
+  orderId?: string;
+  amount?: number;
+  customerEmail?: string;
 }
 
 export interface PaymentResponse {

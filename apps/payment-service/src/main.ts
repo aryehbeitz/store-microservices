@@ -166,7 +166,7 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
     : 'Payment approved successfully';
 
   const webhook: PaymentWebhook = {
-    orderId: paymentRequest.orderId,
+    orderId: paymentRequest.data?.orderId || paymentRequest.orderId,
     paymentId: Math.random().toString(36).substring(2, 15),
     status: status as 'approved' | 'rejected',
     message,

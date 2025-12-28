@@ -49,8 +49,6 @@
     "dev:frontend": "./scripts/dev-frontend.sh",
     "dev:backend": "./scripts/dev-backend.sh",
     "dev:ngrok": "./scripts/dev-ngrok.sh",
-    "debug:frontend": "./scripts/debug-frontend.sh",
-    "debug:backend": "./scripts/debug-backend.sh",
     "debug:payment": "./scripts/debug-payment.sh"
   },
   "private": true,
