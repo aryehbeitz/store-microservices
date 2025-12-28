@@ -33,8 +33,13 @@ lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 sleep 1
 echo ""
 
+# Load credentials from .env.local
+if [ -f .env.local ]; then
+    source .env.local
+fi
+
 # Set required environment variables for backend
-export MONGODB_URI=${MONGODB_URI:-mongodb://localhost:27017/honey-store}
+export MONGODB_URI="mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@localhost:27017/${MONGODB_DATABASE}?authSource=admin"
 export PAYMENT_SERVICE_URL=${PAYMENT_SERVICE_URL:-http://localhost:8082}
 export SERVICE_LOCATION=local
 export CONNECTION_METHOD=local
@@ -57,7 +62,7 @@ echo ""
 
 echo "🚀 Starting local backend with live reload..."
 echo "   Backend will be available at: http://localhost:3000"
-echo "   MongoDB: $MONGODB_URI"
+echo "   MongoDB: mongodb://${MONGODB_USERNAME}:***@localhost:27017/${MONGODB_DATABASE}"
 echo "   Payment API: $PAYMENT_SERVICE_URL"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

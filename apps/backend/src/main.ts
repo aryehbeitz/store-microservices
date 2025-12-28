@@ -456,6 +456,7 @@ app.post('/api/orders', async (req, res) => {
     log.duration = duration;
     logRequest(log);
 
+    console.error('Failed to create order:', error);
     res.status(500).json({ error: 'Failed to create order' });
   }
 });
