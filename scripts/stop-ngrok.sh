@@ -15,13 +15,4 @@ fi
 # Stop port forwards
 ./scripts/stop-port-forward.sh 2>/dev/null
 
-# Reset backend to default connection method
-echo "Resetting backend to default connection method..."
-kubectl set env deployment/backend CONNECTION_METHOD="direct"
-
-# Restart backend to pick up new environment variables
-echo "Restarting backend to pick up new environment variables..."
-kubectl rollout restart deployment/backend
-
 echo "All ngrok tunnels and port forwards stopped"
-echo "Backend reset to default connection method"

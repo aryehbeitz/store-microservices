@@ -108,9 +108,15 @@ sed "$SED_CMD" k8s/frontend-deployment.yaml | kubectl apply -f -
 echo ""
 echo "✅ Deployment complete!"
 echo ""
+
+# Force restart deployments to ensure latest images are pulled
+echo "Restarting deployments to pull latest images..."
+kubectl rollout restart deployment/backend -n "$NAMESPACE"
+kubectl rollout restart deployment/frontend -n "$NAMESPACE"
+
 echo "Waiting for deployments to be ready..."
-kubectl wait --for=condition=available deployment/backend -n "$NAMESPACE" --timeout=300s || echo "Backend may still be starting..."
-kubectl wait --for=condition=available deployment/frontend -n "$NAMESPACE" --timeout=300s || echo "Frontend may still be starting..."
+kubectl rollout status deployment/backend -n "$NAMESPACE" --timeout=300s || echo "Backend may still be starting..."
+kubectl rollout status deployment/frontend -n "$NAMESPACE" --timeout=300s || echo "Frontend may still be starting..."
 
 echo ""
 echo "Available services:"

@@ -63,3 +63,4 @@ telepresence-*
 env.local
 *.env.local
 .env
+.claude/settings.local.json
