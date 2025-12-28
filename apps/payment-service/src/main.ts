@@ -165,8 +165,23 @@ async function processPaymentAsync(paymentRequest: PaymentRequest, delay: number
     ? 'Payment rejected due to simulated error'
     : 'Payment approved successfully';
 
+  // Debug logging
+  console.log('Payment request received:', JSON.stringify(paymentRequest, null, 2));
+  console.log('Extracting orderId from:', {
+    'paymentRequest.data?.orderId': paymentRequest.data?.orderId,
+    'paymentRequest.orderId': paymentRequest.orderId,
+  });
+
+  const orderId = paymentRequest.data?.orderId || paymentRequest.orderId;
+
+  if (!orderId) {
+    console.error('ERROR: No orderId found in payment request!');
+    console.error('Payment request:', paymentRequest);
+    return; // Don't send webhook without orderId
+  }
+
   const webhook: PaymentWebhook = {
-    orderId: paymentRequest.data?.orderId || paymentRequest.orderId,
+    orderId: orderId,
     paymentId: Math.random().toString(36).substring(2, 15),
     status: status as 'approved' | 'rejected',
     message,

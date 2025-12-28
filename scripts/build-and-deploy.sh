@@ -19,9 +19,50 @@ if [ -f "$PROJECT_ROOT/.env.local" ]; then
   export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
 fi
 
+# Check if Docker is running
+echo -e "${YELLOW}Checking Docker...${NC}"
+if ! docker info &> /dev/null; then
+  echo -e "${RED}❌ Error: Docker is not running${NC}"
+  echo ""
+  echo "Please start Docker Desktop and try again."
+  echo ""
+  echo "Solutions:"
+  echo "  • macOS: Open Docker Desktop from Applications"
+  echo "  • Linux: Run 'sudo systemctl start docker'"
+  echo "  • Windows: Start Docker Desktop"
+  echo ""
+  echo "Verify Docker is running with: docker info"
+  echo ""
+  exit 1
+fi
+echo -e "${GREEN}✓ Docker is running${NC}"
+echo ""
+
 # Check if using configured GKE context
 if [ -n "$K8S_CONTEXT" ] && [[ "$K8S_CONTEXT" == gke_* ]]; then
     echo -e "${GREEN}Using configured GKE context: $K8S_CONTEXT${NC}"
+
+    # Check cluster connectivity
+    echo -e "${YELLOW}Checking cluster connectivity...${NC}"
+    if ! kubectl cluster-info --request-timeout=5s &> /dev/null; then
+        echo -e "${RED}✗ Cannot connect to GKE cluster${NC}"
+        echo ""
+        echo -e "${YELLOW}Possible issues:${NC}"
+        echo "  1. VPN not connected (if required by your organization)"
+        echo "  2. Network connectivity issues"
+        echo "  3. Cluster credentials expired"
+        echo "  4. Firewall blocking access"
+        echo ""
+        echo -e "${YELLOW}Solutions:${NC}"
+        echo "  • Enable VPN if required by your workplace"
+        echo "  • Check your network connection"
+        echo "  • Run: gcloud container clusters get-credentials <cluster-name> --region <region>"
+        echo "  • Verify with: kubectl cluster-info"
+        echo ""
+        exit 1
+    fi
+    echo -e "${GREEN}✓ Cluster connectivity verified${NC}"
+
     echo -e "${YELLOW}Redirecting to GKE deployment script...${NC}"
     echo ""
     exec "$SCRIPT_DIR/deploy.sh"
@@ -108,13 +149,11 @@ echo -e "\n${GREEN}✓ All services deployed successfully${NC}"
 # Update service IPs in .env.local
 "$SCRIPT_DIR/update-env-ips.sh" "${K8S_NAMESPACE:-default}"
 
-echo -e "\n${YELLOW}Next steps:${NC}"
-echo "1. Run './scripts/port-forward.sh' to access services locally"
-echo "2. Run './scripts/ngrok-start.sh' for webhook demo with real-time updates"
-echo "3. Run './scripts/telepresence-start.sh' for development with local services"
+echo -e "\n${YELLOW}Next steps - Choose your development mode:${NC}"
+echo "1. Frontend dev:  ${GREEN}pnpm dev:frontend${NC}  (local frontend + K8s backend)"
+echo "2. Backend dev:   ${GREEN}pnpm dev:backend${NC}   (local backend + K8s services)"
+echo "3. Webhook tests: ${GREEN}pnpm dev:ngrok${NC}     (enable webhooks for payment)"
 
-echo -e "\n${YELLOW}Service URLs (after port forwarding):${NC}"
-echo "Frontend:        http://localhost:8080"
-echo "Backend:         http://localhost:3000"
-echo "Payment Service: http://localhost:3002"
-echo "Admin Dashboard: http://localhost:8080/secret-admin-dashboard-xyz"
+echo -e "\n${YELLOW}Or access deployed services directly:${NC}"
+echo "Frontend:        Check .env.local for FRONTEND_URL"
+echo "Admin Dashboard: \${FRONTEND_URL}/secret-admin-dashboard-xyz"

@@ -10,6 +10,25 @@ if [ -f "$PROJECT_ROOT/.env.local" ]; then
   export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
 fi
 
+# Check if Docker is running
+echo "Checking Docker..."
+if ! docker info &> /dev/null; then
+  echo "❌ Error: Docker is not running"
+  echo ""
+  echo "Please start Docker Desktop and try again."
+  echo ""
+  echo "Solutions:"
+  echo "  • macOS: Open Docker Desktop from Applications"
+  echo "  • Linux: Run 'sudo systemctl start docker'"
+  echo "  • Windows: Start Docker Desktop"
+  echo ""
+  echo "Verify Docker is running with: docker info"
+  echo ""
+  exit 1
+fi
+echo "✓ Docker is running"
+echo ""
+
 # Check if GCR registry should be used (default: true for GKE)
 USE_GCR="${USE_GCR:-true}"
 PROJECT_ID="${GCP_PROJECT_ID:-}"

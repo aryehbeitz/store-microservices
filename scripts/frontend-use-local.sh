@@ -13,6 +13,3 @@ EOF
 
 echo "✓ Frontend configured for local backend"
 echo "  Backend URL: http://localhost:3000"
-echo ""
-echo "Make sure local backend is running:"
-echo "  pnpm start:backend"

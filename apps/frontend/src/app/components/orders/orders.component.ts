@@ -15,16 +15,26 @@ export class OrdersComponent implements OnInit, OnDestroy {
   retryingPayment: { [orderId: string]: boolean } = {};
   realTimeUpdates = false;
   private socket: Socket | null = null;
+  private pollingInterval: any = null;
 
   constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
     this.loadOrders();
+
+    // Start polling for updates every 5 seconds
+    this.pollingInterval = setInterval(() => {
+      this.checkForUpdates();
+    }, 5000);
   }
 
   ngOnDestroy(): void {
     if (this.socket) {
       this.socket.disconnect();
+    }
+
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
     }
   }
 
@@ -51,6 +61,40 @@ export class OrdersComponent implements OnInit, OnDestroy {
     });
   }
 
+  private checkForUpdates(): void {
+    // Quietly check for updates without showing loading spinner
+    this.apiService.getAllOrders().subscribe({
+      next: (response) => {
+        // Only update if orders have changed
+        if (this.hasOrdersChanged(response.orders)) {
+          this.orders = response.orders;
+        }
+      },
+      error: (error) => {
+        // Silently ignore errors during polling
+        console.error('Error checking for order updates:', error);
+      }
+    });
+  }
+
+  private hasOrdersChanged(newOrders: Order[]): boolean {
+    if (this.orders.length !== newOrders.length) {
+      return true;
+    }
+
+    // Check if any order status or payment status has changed
+    for (let i = 0; i < newOrders.length; i++) {
+      const existingOrder = this.orders.find(o => o._id === newOrders[i]._id);
+      if (!existingOrder ||
+          existingOrder.status !== newOrders[i].status ||
+          existingOrder.paymentStatus !== newOrders[i].paymentStatus) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   retryPayment(orderId: string): void {
     this.retryingPayment[orderId] = true;
 
@@ -70,21 +114,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   clearAllOrders(): void {
-    if (confirm('Are you sure you want to clear all orders? This action cannot be undone.')) {
-      this.loading = true;
-      this.apiService.clearAllOrders().subscribe({
-        next: (response) => {
-          console.log('Clear all orders response:', response);
-          this.orders = [];
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error clearing orders:', error);
-          this.loading = false;
-          this.error = 'Failed to clear orders. Please try again.';
-        }
-      });
-    }
+    this.loading = true;
+    this.apiService.clearAllOrders().subscribe({
+      next: (response) => {
+        console.log('Clear all orders response:', response);
+        this.orders = [];
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error clearing orders:', error);
+        this.loading = false;
+        this.error = 'Failed to clear orders. Please try again.';
+      }
+    });
   }
 
   getStatusClass(status: string): string {

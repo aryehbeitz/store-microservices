@@ -19,6 +19,28 @@ echo "========================================"
 echo "Namespace: $NAMESPACE"
 echo ""
 
+# Check cluster connectivity
+echo "Checking cluster connectivity..."
+if ! kubectl cluster-info --request-timeout=5s &> /dev/null; then
+  echo "❌ Error: Cannot connect to Kubernetes cluster"
+  echo ""
+  echo "Possible issues:"
+  echo "  1. VPN not connected (if required by your organization)"
+  echo "  2. Network connectivity issues"
+  echo "  3. Cluster credentials expired"
+  echo "  4. Wrong kubectl context selected"
+  echo ""
+  echo "Solutions:"
+  echo "  • Enable VPN if required by your workplace"
+  echo "  • Check: kubectl config current-context"
+  echo "  • Switch context: kubectl config use-context <context-name>"
+  echo "  • For GKE: gcloud container clusters get-credentials <cluster-name> --region <region>"
+  echo ""
+  exit 1
+fi
+echo "✓ Cluster connectivity verified"
+echo ""
+
 # Validate MongoDB credentials
 if [ -z "$MONGODB_USERNAME" ] || [ -z "$MONGODB_PASSWORD" ]; then
   echo "❌ Error: MongoDB credentials not found in .env.local"

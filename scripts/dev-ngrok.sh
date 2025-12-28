@@ -44,23 +44,59 @@ echo ""
 echo "🚀 Starting ngrok tunnel to local backend..."
 echo "   This will expose http://localhost:3000 to the internet"
 echo ""
-echo "⚠️  IMPORTANT: After ngrok starts, restart your backend:"
+
+# Start ngrok in background first
+ngrok http 3000 --log=stdout > /tmp/ngrok.log 2>&1 &
+NGROK_PID=$!
+
+# Wait for ngrok to start
+sleep 3
+
+# Get ngrok public URL
+NGROK_URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"https://[^"]*' | cut -d'"' -f4 | head -1)
+
+if [ -z "$NGROK_URL" ]; then
+    echo "❌ Failed to get ngrok URL"
+    kill $NGROK_PID 2>/dev/null || true
+    exit 1
+fi
+
+echo "✅ Ngrok tunnel started: $NGROK_URL"
+echo ""
+
+# Update payment service to use ngrok URL
+echo "🔄 Updating payment service to use ngrok URL..."
+kubectl set env deployment/payment-api -n meetup3 BACKEND_URL="$NGROK_URL" 2>/dev/null || \
+kubectl set env deployment/payment-service -n meetup3 BACKEND_URL="$NGROK_URL" 2>/dev/null || true
+echo "✅ Payment service updated"
+echo ""
+
+echo "⚠️  IMPORTANT: Restart your backend to enable ngrok:"
 echo "   1. Go to Terminal 2 (where backend is running)"
 echo "   2. Press Ctrl+C"
 echo "   3. Run: pnpm dev:backend"
 echo "   4. Backend will detect ngrok and use it for webhooks"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Ngrok will run in foreground"
-echo "  Press Ctrl+C to stop"
+echo "  Ngrok tunnel active"
+echo "  Press Ctrl+C to stop and restore payment service"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
 # Cleanup function
 cleanup() {
     echo ""
-    echo "🛑 Stopping ngrok..."
+    echo "🛑 Stopping ngrok and restoring payment service..."
+
+    # Kill ngrok
+    kill $NGROK_PID 2>/dev/null || true
     pkill -f ngrok 2>/dev/null || true
+
+    # Restore payment service to use K8s backend
+    echo "🔄 Restoring payment service to K8s backend..."
+    kubectl set env deployment/payment-api -n meetup3 BACKEND_URL="http://backend:3000" 2>/dev/null || \
+    kubectl set env deployment/payment-service -n meetup3 BACKEND_URL="http://backend:3000" 2>/dev/null || true
+
     echo "✅ Cleanup complete"
     exit 0
 }
@@ -68,5 +104,5 @@ cleanup() {
 # Trap Ctrl+C to cleanup
 trap cleanup INT TERM EXIT
 
-# Start ngrok
-ngrok http 3000 --log=stdout
+# Show ngrok logs (foreground)
+tail -f /tmp/ngrok.log

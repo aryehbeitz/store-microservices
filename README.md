@@ -15,26 +15,38 @@ This is a honey production items and accessories store featuring:
 ## 🏗️ Architecture
 
 ```
-┌─────────────┐
-│   Frontend  │ (Angular)
-│   :4200     │
-└──────┬──────┘
-       │
-       ├─────────────────┐
-       │                 │
-       ▼                 ▼
-┌──────────────┐   ┌─────────────┐
-│   Backend    │◄─►│  Payment    │
-│   :3000      │   │  Service    │
-│              │   │  :3002      │
-└──────┬───────┘   └─────────────┘
-       │
-       ▼
-┌──────────────┐
-│   MongoDB    │
-│   :27017     │
-└──────────────┘
+      ┌─────────────┐
+      │   Frontend  │ (Angular)
+      │   :4200     │
+      └──────┬──────┘
+             │
+             │ HTTP/Socket.io
+             │
+             ▼
+      ┌──────────────┐
+      │   Backend    │◄───┐
+      │   :3000      │    │ Webhook
+      └──────┬───────┘    │ callback
+             │            │
+             ├────────────┼─────────┐
+             │            │         │
+             ▼            │         ▼
+      ┌──────────────┐    │   ┌─────────────┐
+      │   MongoDB    │    │   │  Payment    │
+      │   :27017     │    └──◄│  Service    │
+      └──────────────┘        │  :8080      │
+                              └─────────────┘
+
+
+    Socket.io updates
 ```
+
+**Request Flow:**
+1. Frontend → Backend (API calls: orders, products, etc.)
+2. Backend → MongoDB (data persistence)
+3. Backend → Payment Service (initiate payment with webhook URL)
+4. Payment Service → Backend (webhook callback with payment result)
+5. Backend → Frontend (Socket.io real-time updates for order status)
 
 ## 🚀 Quick Start
 
@@ -43,8 +55,33 @@ This is a honey production items and accessories store featuring:
 - Node.js 18+
 - pnpm (install globally: `npm install -g pnpm` or `corepack enable`)
 - Docker and Docker Compose
-- Minikube or K3s
+- Kubernetes cluster (GKE, Minikube, or K3s)
 - kubectl
+
+### TL;DR - Quick Commands
+
+```bash
+# First time setup
+./scripts/setup-local-config.sh
+pnpm setup                     # Installs deps and deploys to K8s
+
+# Development workflows
+pnpm dev:frontend              # Frontend dev with K8s backend
+
+# For backend dev (run frontend first!):
+pnpm dev:frontend              # Terminal 1: Start frontend
+pnpm dev:backend               # Terminal 2: Start backend
+
+# Advanced workflows
+pnpm dev:ngrok                 # Enable webhooks for payment testing
+pnpm telepresence:backend      # Run local backend with K8s services (webhooks work!)
+pnpm telepresence:connect      # Just connect to cluster (no intercepts)
+
+# Reset to full K8s deployment
+pnpm reset                     # Stop all dev modes, restore K8s services
+
+# Access deployed services - check deployment output for URLs
+```
 
 ### 1. Configure Your Environment
 
@@ -62,65 +99,107 @@ This will:
 
 After deployment, service IPs are automatically detected and saved to `.env.local`
 
-### 2. Install Dependencies
+### 2. Install Dependencies and Deploy
 
 ```bash
-pnpm install
+pnpm setup
 ```
 
-### 3. Start Kubernetes Cluster
-
-```bash
-./scripts/build-and-deploy.sh
-```
-
-This will:
-- Start Minikube or K3s
+This single command will:
+- Install all dependencies
 - Build all Docker images
-- Set up the Kubernetes cluster
+- Deploy to Kubernetes:
+  - MongoDB with persistent storage
+  - Backend service
+  - Payment microservice
+  - Frontend application
 
-### 3. Deploy Services
+### 3. Develop Locally with K8s Backend
+
+Choose your development mode:
+
+#### Option 1: Frontend Development (Recommended for UI work)
 
 ```bash
-# (now included in build-and-deploy.sh)
+pnpm dev:frontend
 ```
 
-This will deploy:
-- MongoDB with persistent storage
-- Backend service
-- Payment microservice
-- Frontend application
+This single command:
+- Configures frontend to use K8s backend
+- Starts port-forwarding to backend
+- Starts frontend with live reload on http://localhost:4200
+- Cleans up everything when you press Ctrl+C
 
-### 4. Access Services
+The script will print all service URLs when ready.
 
-Choose one of three methods:
+#### Option 2: Backend Development (Recommended for API work)
 
-#### Option 1: Port Forwarding (Simplest)
+**Important:** Start frontend first!
 
 ```bash
-./scripts/port-forward.sh
+# Terminal 1: Start frontend
+pnpm dev:frontend
+
+# Terminal 2: Start backend
+pnpm dev:backend
 ```
 
-- Frontend: http://localhost:8080
-- Backend: http://localhost:3000
-- Payment Service: http://localhost:3002
-- **Admin Dashboard**: http://localhost:8080/secret-admin-dashboard-xyz
+This command:
+- Requires local frontend to be running first
+- Connects local frontend to local backend automatically
+- Starts port-forwarding to MongoDB and Payment API
+- Starts backend locally with live reload
+- Scales down K8s backend to avoid conflicts
 
-#### Option 2: Ngrok (Public URLs)
+The script will print all service URLs when ready.
+
+#### Option 3: Ngrok (Public URLs for webhook testing)
 
 ```bash
-./scripts/ngrok-start.sh
+pnpm dev:ngrok
 ```
 
 Creates public HTTPS URLs for all services. Great for webhook testing!
 
-#### Option 3: Telepresence (Local Development)
+#### Option 4: Telepresence (Hybrid development)
+
+**Prerequisites:** Deploy services to K8s first (steps 1-3 above)
+
+**Option 4a: Backend Development (Most useful)**
 
 ```bash
-./scripts/telepresence-start.sh
+# Terminal 1: Connect and intercept backend
+pnpm telepresence:backend
+
+# Terminal 2: Run local backend
+pnpm start:backend
 ```
 
-Connect your local development environment to the cluster. Perfect for debugging!
+The script shows you exactly what's running where:
+- ✅ **LOCAL (Live Changes):** Your backend
+- ☁️ **K8S (Cannot Change):** Frontend, MongoDB, Payment API
+- ✅ **WEBHOOKS:** Work natively (no ngrok needed!)
+
+Test with real deployed frontend. Your local backend handles all requests.
+
+**Option 4b: Connect Only (No intercepts)**
+
+```bash
+pnpm telepresence:connect
+```
+
+Just connect to cluster network. Access cluster services from local machine without intercepting anything.
+
+#### Option 5: Full K8s Access (View deployed services)
+
+Access your deployed services directly via their LoadBalancer IPs:
+
+```bash
+# Get service URLs
+kubectl get svc -n <your-namespace>
+```
+
+Service URLs are displayed after deployment completes.
 
 ---
 
@@ -135,52 +214,26 @@ For production deployments or multi-environment setups, use the namespace-aware 
 ./scripts/k8s-build-and-deploy.sh <context-name> <namespace>
 
 # Example for GKE:
-./scripts/k8s-build-and-deploy.sh gke_my-project_us-central1_cluster-name meetup3
+./scripts/k8s-build-and-deploy.sh gke_my-project_us-central1_cluster-name <namespace>
 
 # Example for local cluster:
-USE_GCR=false ./scripts/k8s-build-and-deploy.sh minikube meetup3
+USE_GCR=false ./scripts/k8s-build-and-deploy.sh minikube <namespace>
 ```
 
-### Build Only
+### Quick Redeploy After Code Changes (Uses .env.local)
+
+After making code changes, quickly rebuild and redeploy a single service:
 
 ```bash
-# Build all services (uses env vars or auto-detects)
-./scripts/k8s-build.sh
+pnpm k8s:build-deploy:backend      # For backend
+pnpm k8s:build-deploy:frontend     # For frontend
+pnpm k8s:build-deploy:payment      # For payment service
 
-# Build specific service
-./scripts/k8s-build-service.sh backend
-./scripts/k8s-build-service.sh frontend
-
-# Or use npm scripts:
-pnpm k8s:build:backend
-pnpm k8s:build:frontend
-pnpm k8s:build:all
-```
-
-### Deploy Only
-
-```bash
-# Deploy to specific context and namespace
-./scripts/k8s-deploy.sh <context-name> <namespace>
-
-# Example:
-./scripts/k8s-deploy.sh gke_my-project_us-central1_cluster-name meetup3
-```
-
-### Redeploy Specific Service (Using npm)
-
-```bash
-# Build and redeploy a single service
-pnpm k8s:build-deploy:backend
-pnpm k8s:build-deploy:frontend
-
-# Or separately:
-pnpm k8s:build:backend
-pnpm k8s:deploy:backend
-
-# Or use the script directly:
-./scripts/k8s-redeploy-service.sh backend
-```
+These commands:
+- Use configuration from `.env.local` (no need to specify context/namespace)
+- Build the Docker image with your changes
+- Push to Artifact Registry
+- Restart the deployment automatically
 
 ### Delete Deployment
 
@@ -188,174 +241,6 @@ pnpm k8s:deploy:backend
 # Delete all resources in a namespace
 ./scripts/k8s-delete.sh <context-name> <namespace>
 ```
-
-### Available Scripts
-
-- `k8s-build.sh` - Build Docker images (supports GKE Artifact Registry or local)
-- `k8s-deploy.sh` - Deploy to Kubernetes with context and namespace
-- `k8s-build-and-deploy.sh` - Combined build and deploy
-- `k8s-build-service.sh` - Build a single service
-- `k8s-redeploy-service.sh` - Redeploy a single service
-- `k8s-delete.sh` - Delete all resources from namespace
-
-### GKE Configuration
-
-For Google Kubernetes Engine (GKE), set environment variables:
-
-```bash
-export GCP_PROJECT_ID=your-project-id
-export USE_GCR=true  # Optional, defaults to true
-export K8S_NAMESPACE=your-namespace  # Required
-
-# Then run:
-./scripts/k8s-build-and-deploy.sh <context> <namespace>
-```
-
-Optional environment variables:
-- `ARTIFACT_REGISTRY_LOCATION` - defaults to `us-east1`
-- `ARTIFACT_REGISTRY_REPO` - defaults to `docker-repo`
-- `K8S_NAMESPACE` - required for deployment
-
-The scripts will automatically:
-- Detect GKE contexts (`gke_*`)
-- Auto-detect project ID from `gcloud config` if `GCP_PROJECT_ID` not set
-- Build images for `linux/amd64` platform
-- Push to Artifact Registry
-- Update deployments to use registry images
-
-### NPM Scripts for Quick Deployments
-
-```bash
-# Set environment variables once
-export GCP_PROJECT_ID=your-project-id
-export K8S_NAMESPACE=your-namespace
-
-# Build and deploy services
-pnpm k8s:build-deploy:backend
-pnpm k8s:build-deploy:frontend
-
-# Check status
-pnpm k8s:status
-
-# View logs
-pnpm k8s:logs:backend
-pnpm k8s:logs:frontend
-```
-
-## 🔄 Development Workflows
-
-### 1. Local Development (No Kubernetes)
-
-For pure local development without Kubernetes:
-
-```bash
-# Terminal 1 - MongoDB
-docker run -p 27017:27017 mongo:7
-
-# Terminal 2 - Backend (with environment variables)
-cd apps/backend
-# Option 1: Copy env.example and edit it, then source it
-cp env.example env.local
-# Edit env.local with your values, then:
-source env.local
-pnpm start:backend
-
-# OR Option 2: Set variables inline
-MONGODB_URI=mongodb://localhost:27017/honey-store \
-PAYMENT_SERVICE_URL=http://your-payment-service-url \
-pnpm start:backend
-
-# Terminal 3 - Payment Service
-pnpm start:payment
-
-# Terminal 4 - Frontend
-pnpm start:frontend
-```
-
-**Access:** http://localhost:4200
-
-**Environment Variables:**
-- See `apps/backend/env.example` for all available variables
-- Copy it to `env.local` and customize for your setup
-
-**Benefits:**
-- ✅ Fastest development cycle
-- ✅ Full debugging capabilities
-- ✅ Hot reload for all services
-- ❌ No Kubernetes features
-- ❌ No webhook testing
-
-### 2. Port Forwarding (Kubernetes + Local Access)
-
-For testing with Kubernetes but local access:
-
-```bash
-# Deploy to Kubernetes
-./scripts/build-and-deploy.sh
-# (now included in build-and-deploy.sh)
-
-# Access via port forwarding
-./scripts/port-forward.sh
-```
-
-**Access:** http://localhost:8080
-
-**Benefits:**
-- ✅ Real Kubernetes environment
-- ✅ Production-like setup
-- ✅ Simple access method
-- ❌ No webhook support (orders stay pending)
-- ❌ No real-time updates
-
-### 3. Telepresence (Hybrid Development)
-
-For debugging with Kubernetes + local services:
-
-```bash
-# Deploy to Kubernetes
-./scripts/build-and-deploy.sh
-# (now included in build-and-deploy.sh)
-
-# Connect with Telepresence
-./scripts/telepresence-start.sh
-# Choose which service to intercept (Backend, Payment Service, or Both)
-
-# In separate terminals, run local services:
-pnpm start:backend    # If intercepting backend
-pnpm start:payment    # If intercepting payment service
-```
-
-**Access:** http://localhost:8080 (frontend in K8s)
-
-**Benefits:**
-- ✅ Real Kubernetes environment
-- ✅ Local debugging with hot reload
-- ✅ Real webhook support (orders update automatically)
-- ✅ Test with real MongoDB and other services
-- ❌ More complex setup
-
-### 4. Ngrok (Public Webhook Testing)
-
-For testing webhooks and sharing with others:
-
-```bash
-# Deploy to Kubernetes
-./scripts/build-and-deploy.sh
-# (now included in build-and-deploy.sh)
-
-# Create public tunnels
-./scripts/ngrok-start.sh
-```
-
-**Access:** Public HTTPS URLs (shown in terminal)
-
-**Benefits:**
-- ✅ Public HTTPS URLs
-- ✅ Real webhook support
-- ✅ Share with team/clients
-- ✅ Mobile testing
-- ❌ Requires ngrok account
-- ❌ URLs change on restart (free tier)
 
 ## 📊 Orders Page - Connection Method Demo
 
@@ -448,37 +333,6 @@ store-microservices/
     └── SETUP.md              # Detailed setup instructions
 ```
 
-## 🔧 Development
-
-### Local Development (No Kubernetes)
-
-```bash
-# Terminal 1 - MongoDB
-docker run -p 27017:27017 mongo:7
-
-# Terminal 2 - Backend
-pnpm start:backend
-
-# Terminal 3 - Payment Service
-pnpm start:payment
-
-# Terminal 4 - Frontend
-pnpm start:frontend
-```
-
-### Build Individual Services
-
-```bash
-# Build backend
-nx build backend
-
-# Build payment service
-nx build payment-service
-
-# Build frontend
-nx build frontend
-```
-
 ## 📖 Documentation
 
 - [Setup Guide](docs/SETUP.md) - Detailed installation for macOS and Linux
@@ -508,42 +362,45 @@ nx build frontend
 ## 🎮 Demo Scenarios
 
 ### 1. Normal Purchase Flow
-1. Browse products at http://localhost:8080
+1. Browse products in the frontend (local dev or deployed)
 2. Add items to cart
 3. Checkout with customer details
 4. Watch payment process in admin dashboard
 
 ### 2. Payment Failure Simulation
-1. Open admin dashboard: http://localhost:8080/secret-admin-dashboard-xyz
+1. Open admin dashboard at `/secret-admin-dashboard-xyz`
 2. Toggle "Simulate Payment Error"
 3. Place an order
 4. Watch the payment fail in real-time
 
-### 3. Connection Method Visualization
-1. Start with port forwarding
-2. Open admin dashboard
-3. Services show blue circles (port-forward)
-4. Stop and switch to ngrok
-5. Services show purple circles (ngrok)
-6. Switch to telepresence
-7. Services show orange circles (telepresence)
+### 3. Local Development Workflow
+1. Frontend-only work: `pnpm dev:frontend`
+2. Backend work: Start `pnpm dev:frontend`, then in another terminal `pnpm dev:backend`
+3. Make code changes - see instant updates in http://localhost:4200
+4. Backend changes reload automatically
+5. Use `pnpm dev:ngrok` to test webhooks with real payment processing
 
 ## 🚦 Stopping Services
 
 ```bash
-# Stop port forwards
-./scripts/stop-port-forward.sh
+# Reset everything back to K8s (stops telepresence, port-forwards, scales up backend)
+pnpm reset
+
+# Stop dev commands (pnpm dev:frontend or pnpm dev:backend)
+# Just press Ctrl+C - cleanup happens automatically!
 
 # Stop ngrok
-./scripts/stop-ngrok.sh
+# Press Ctrl+C in the ngrok terminal - auto-restores payment service
 
 # Stop telepresence
-./scripts/stop-telepresence.sh
+pnpm telepresence:stop
 
-# Stop Kubernetes
+# Stop Kubernetes cluster
 minikube stop
-# or
+# or for k3d:
 k3d cluster delete honey-store
+# or for GKE:
+# Services keep running - manage via kubectl or GCP Console
 ```
 
 ## 📝 License

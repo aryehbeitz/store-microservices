@@ -1,8 +1,12 @@
 #!/bin/bash
 
-# Develop backend locally with frontend already running
+# Develop backend locally with local frontend
 
 set -e
+
+# Colors
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Backend Development Mode"
@@ -13,17 +17,26 @@ echo "   • pnpm dev:ngrok - Start ngrok for webhooks (if needed)"
 echo "   • pnpm debug:payment - Debug payment service with Telepresence"
 echo ""
 
-# Check if frontend is running
+# Check if frontend is running locally
 if ! lsof -i:4200 > /dev/null 2>&1; then
     echo "❌ Frontend is not running"
     echo ""
-    echo "Start frontend first with:"
-    echo "  pnpm dev:frontend"
+    echo "Backend development requires local frontend for UI testing."
+    echo ""
+    echo "Start frontend first:"
+    echo -e "  ${GREEN}pnpm dev:frontend${NC}"
+    echo ""
+    echo "For API-only testing without UI:"
+    echo "  1. Port-forward services:"
+    echo "     kubectl port-forward -n meetup3 svc/mongodb 27017:27017 &"
+    echo "     kubectl port-forward -n meetup3 svc/payment-api 8082:8080 &"
+    echo "  2. Start backend manually:"
+    echo "     pnpm start:backend"
     echo ""
     exit 1
 fi
 
-echo "✅ Frontend is running on port 4200"
+echo "✅ Local frontend detected on port 4200"
 echo ""
 
 # Scale down K8s backend so it doesn't receive webhooks
@@ -32,7 +45,7 @@ kubectl scale deployment backend -n meetup3 --replicas=0 2>/dev/null || echo "  
 echo ""
 
 # Configure frontend to use local backend
-echo "📝 Configuring frontend to use LOCAL backend..."
+echo "📝 Configuring local frontend to use LOCAL backend..."
 ./scripts/frontend-use-local.sh
 echo ""
 
@@ -81,7 +94,8 @@ sleep 2
 echo ""
 
 echo "🚀 Starting local backend with live reload..."
-echo "   Backend will be available at: http://localhost:3000"
+echo "   Backend API: http://localhost:3000"
+echo "   Frontend: http://localhost:4200 (connected to local backend)"
 echo "   MongoDB: mongodb://${MONGODB_USERNAME}:***@localhost:27017/${MONGODB_DATABASE}"
 echo "   Payment API: $PAYMENT_SERVICE_URL"
 echo ""
@@ -107,6 +121,10 @@ cleanup() {
     fi
     lsof -ti:27017 | xargs kill -9 2>/dev/null || true
     lsof -ti:8082 | xargs kill -9 2>/dev/null || true
+
+    # Scale K8s backend back up
+    echo "🔼 Scaling K8s backend back up..."
+    kubectl scale deployment backend -n meetup3 --replicas=1 2>/dev/null || true
 
     echo "✅ Cleanup complete"
     exit 0

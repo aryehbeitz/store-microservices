@@ -111,7 +111,7 @@ const OrderModel = mongoose.model("Order", orderSchema);
 const products: Product[] = [
   {
     id: "1",
-    name: "Pure Wildflower Honey1",
+    name: "Pure Wildflower Honey",
     description:
       "Raw, unfiltered wildflower honey from local beekeepers. Rich in antioxidants and natural enzymes.",
     price: 24.99,
