@@ -63,9 +63,6 @@ export class CheckoutComponent implements OnInit {
           this.orderId = response.orderId;
           this.orderPlaced = true;
           this.cartService.clearCart();
-          setTimeout(() => {
-            this.router.navigate(['/']);
-          }, 5000);
         },
         error: (error) => {
           console.error('Error creating order:', error);
