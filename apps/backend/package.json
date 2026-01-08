@@ -1,6 +1,6 @@
 {
   "name": "honey-store-backend",
-  "version": "1.0.2-2026-01-08",
+  "version": "1.0.3-2026-01-08",
   "description": "Honey Store Backend Service",
   "main": "src/main.ts",
   "scripts": {
