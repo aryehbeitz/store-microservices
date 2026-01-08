@@ -91,6 +91,20 @@ echo "Image: $FULL_IMAGE"
 echo "========================================"
 echo ""
 
+# Pre-flight: Validate local build
+echo "Pre-flight: Validating local build..."
+cd "$PROJECT_ROOT"
+if ! pnpm exec nx build $SERVICE --configuration=production 2>&1 | tee /tmp/build-validation.log; then
+  echo ""
+  echo "❌ Error: Local build failed for $SERVICE"
+  echo ""
+  echo "Fix the errors above before deploying to Kubernetes."
+  echo "This prevents wasting time on Docker builds that will fail."
+  exit 1
+fi
+echo "✅ Local build validation passed"
+echo ""
+
 # Step 0: Bump version and commit
 echo "Step 0: Bumping version for $SERVICE..."
 ./scripts/bump-and-commit-version.sh "$SERVICE"
