@@ -1,0 +1,38 @@
+{
+  // Terminal and editor settings optimized for presentations
+  "terminal.integrated.fontSize": 14,
+  "editor.fontSize": 14,
+  "debug.console.fontSize": 14,
+
+  // Make breakpoints more visible
+  "debug.showBreakpointsInOverviewRuler": true,
+
+  // Auto-save to avoid losing changes during demos
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+
+  // Format on save for cleaner code demos
+  "editor.formatOnSave": true,
+
+  // Exclude noise from file explorer during demos
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.nx": true
+  },
+
+  // Disable minimap for cleaner view during presentations
+  "editor.minimap.enabled": false,
+
+  // Show file path in title for clarity
+  "window.title": "${activeEditorMedium}${separator}${rootName}",
+
+  // Prettier line length
+  "editor.rulers": [80, 120],
+
+  // TypeScript settings
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always"
+}

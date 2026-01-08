@@ -30,8 +30,14 @@ if ! command -v telepresence &> /dev/null; then
     exit 1
 fi
 
+# Load namespace from .env.local if it exists
+if [ -f .env.local ]; then
+    source .env.local
+fi
+NAMESPACE="${K8S_NAMESPACE:-default}"
+
 echo -e "${YELLOW}Connecting to Kubernetes cluster...${NC}"
-telepresence connect
+telepresence connect -n "$NAMESPACE"
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Failed to connect to cluster${NC}"

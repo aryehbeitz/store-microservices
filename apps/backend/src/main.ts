@@ -10,11 +10,11 @@ import {
 import axios from "axios";
 import cors from "cors";
 import express from "express";
+import { readFileSync } from "fs";
 import { createServer } from "http";
 import mongoose from "mongoose";
-import { Server } from "socket.io";
-import { readFileSync } from "fs";
 import { join } from "path";
+import { Server } from "socket.io";
 
 // Load version from package.json
 let VERSION = "unknown";
