@@ -13,6 +13,14 @@ import express from "express";
 import { createServer } from "http";
 import mongoose from "mongoose";
 import { Server } from "socket.io";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+// Load version from package.json
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8")
+);
+const VERSION = packageJson.version;
 
 const app = express();
 const httpServer = createServer(app);
@@ -260,6 +268,7 @@ app.get("/health", (req, res) => {
   res.json({
     status: "healthy",
     service: "backend",
+    version: VERSION,
     mongodb:
       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
     location: SERVICE_LOCATION,
@@ -750,6 +759,46 @@ app.delete("/api/orders", async (req, res) => {
 
     res.status(500).json({ error: "Failed to clear orders" });
   }
+});
+
+// Get versions from all services
+app.get("/api/services/versions", async (req, res) => {
+  const versions: { [key: string]: string } = {};
+
+  // Backend version
+  versions.backend = VERSION;
+
+  // Try to get frontend version (from frontend service)
+  try {
+    // Frontend doesn't have a health endpoint, but we can get it from the deployed image
+    versions.frontend = "N/A";
+  } catch (error) {
+    versions.frontend = "N/A";
+  }
+
+  // Try to get payment service version
+  try {
+    const paymentHealthUrl = `${PAYMENT_SERVICE_URL}/health`;
+    const paymentResponse = await axios.get(paymentHealthUrl, { timeout: 2000 });
+    versions["payment-service"] = paymentResponse.data.version || "N/A";
+  } catch (error) {
+    versions["payment-service"] = "N/A";
+  }
+
+  // Try to get MongoDB version
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const adminDb = mongoose.connection.db.admin();
+      const serverInfo = await adminDb.serverInfo();
+      versions.mongodb = serverInfo.version;
+    } else {
+      versions.mongodb = "disconnected";
+    }
+  } catch (error) {
+    versions.mongodb = "error";
+  }
+
+  res.json(versions);
 });
 
 // Version endpoint - returns current backend version

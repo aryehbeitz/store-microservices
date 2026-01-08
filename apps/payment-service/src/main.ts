@@ -11,6 +11,14 @@ import cors from 'cors';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Load version from package.json
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf-8')
+);
+const VERSION = packageJson.version;
 
 const app = express();
 const httpServer = createServer(app);
@@ -94,6 +102,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'payment-service',
+    version: VERSION,
     location: SERVICE_LOCATION,
     connectionMethod: CONNECTION_METHOD,
   });

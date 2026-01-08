@@ -83,6 +83,7 @@ export interface ServiceStatus {
   connectionMethod: 'port-forward' | 'ngrok' | 'telepresence' | 'direct' | 'none';
   enabled: boolean;
   url?: string;
+  version?: string;
 }
 
 export interface RequestLog {

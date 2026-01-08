@@ -602,6 +602,20 @@ h2 {
   background: #2196f3;
 }
 
+.version-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem !important;
+  font-weight: 600;
+  background: #9c27b0;
+  color: white;
+}
+
+.service-version {
+  margin: 0.5rem 0;
+}
+
 .location-description {
   display: block;
   color: #666;

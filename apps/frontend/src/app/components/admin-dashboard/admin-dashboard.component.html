@@ -43,6 +43,10 @@
                 {{ frontendLocation === 'local' ? 'Local' : 'K8s' }}
               </span>
             </div>
+            <div class="service-version" *ngIf="serviceVersions['frontend']">
+              <strong>Version:</strong>
+              <span class="version-badge">{{ serviceVersions['frontend'] }}</span>
+            </div>
             <div class="service-connection">
               <strong>Connection:</strong>
               <span class="connection-method-badge" [style.background]="frontendLocation === 'local' ? '#2196f3' : '#4caf50'">
@@ -82,6 +86,10 @@
                 {{ services['backend'].location === 'local' ? 'Local' : 'K8s' }}
               </span>
             </div>
+            <div class="service-version" *ngIf="serviceVersions['backend']">
+              <strong>Version:</strong>
+              <span class="version-badge">{{ serviceVersions['backend'] }}</span>
+            </div>
             <div class="service-connection">
               <strong>Connection:</strong>
               <span class="connection-method-badge"
@@ -118,6 +126,10 @@
               <strong>Location:</strong>
               <span class="location-badge location-cloud">K8s</span>
             </div>
+            <div class="service-version" *ngIf="serviceVersions['payment-service']">
+              <strong>Version:</strong>
+              <span class="version-badge">{{ serviceVersions['payment-service'] }}</span>
+            </div>
             <div class="service-connection">
               <strong>Connection:</strong>
               <span class="connection-method-badge" [style.background]="getServiceColor(services['payment-service'])">
@@ -145,6 +157,10 @@
             <div class="service-location">
               <strong>Location:</strong>
               <span class="location-badge location-cloud">K8s</span>
+            </div>
+            <div class="service-version" *ngIf="serviceVersions['mongodb']">
+              <strong>Version:</strong>
+              <span class="version-badge">{{ serviceVersions['mongodb'] }}</span>
             </div>
             <div class="service-url">
               <strong>Access URL:</strong>

@@ -62,12 +62,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private reconnectTimer?: any;
   private checkInterval?: any;
   private currentBackendUrl: string = '/';
+  serviceVersions: { [key: string]: string } = {};
 
   ngOnInit() {
     this.detectFrontendLocation();
     this.connectToServices();
     // Periodically check if local services are available
     this.startServiceCheck();
+    // Fetch service versions
+    this.fetchServiceVersions();
+    // Refresh versions every 30 seconds
+    setInterval(() => this.fetchServiceVersions(), 30000);
   }
 
   detectFrontendLocation() {
@@ -435,5 +440,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       default:
         return 'N/A';
     }
+  }
+
+  fetchServiceVersions() {
+    const backendUrl = this.frontendLocation === 'local' ? environment.backendUrl : '';
+    fetch(`${backendUrl}/api/services/versions`)
+      .then(response => response.json())
+      .then(versions => {
+        this.serviceVersions = versions;
+        // Update service objects with version info
+        Object.keys(this.services).forEach(serviceName => {
+          if (versions[serviceName]) {
+            this.services[serviceName].version = versions[serviceName];
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Failed to fetch service versions:', error);
+      });
   }
 }
