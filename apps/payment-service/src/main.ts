@@ -15,10 +15,27 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // Load version from package.json
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, '../package.json'), 'utf-8')
-);
-const VERSION = packageJson.version;
+let VERSION = "unknown";
+try {
+  // Try multiple paths for different environments (local dev vs Docker)
+  const possiblePaths = [
+    join(__dirname, '../package.json'),           // Local dev
+    join(__dirname, '../../../apps/payment-service/package.json'), // Docker
+    join(process.cwd(), 'apps/payment-service/package.json'),      // Docker alternative
+  ];
+
+  for (const path of possiblePaths) {
+    try {
+      const packageJson = JSON.parse(readFileSync(path, 'utf-8'));
+      VERSION = packageJson.version;
+      break;
+    } catch (e) {
+      // Try next path
+    }
+  }
+} catch (error) {
+  console.warn('Could not load version from package.json');
+}
 
 const app = express();
 const httpServer = createServer(app);
