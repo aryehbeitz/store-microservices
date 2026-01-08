@@ -82,11 +82,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    // Check if any order status or payment status has changed
+    // Check if any order payment status has changed
     for (let i = 0; i < newOrders.length; i++) {
       const existingOrder = this.orders.find(o => o._id === newOrders[i]._id);
       if (!existingOrder ||
-          existingOrder.status !== newOrders[i].status ||
           existingOrder.paymentStatus !== newOrders[i].paymentStatus) {
         return true;
       }
