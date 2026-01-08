@@ -103,8 +103,8 @@ if [ "$SERVICE" = "all" ]; then
 else
   if bump_service_version "$SERVICE"; then
     # Get the new version for single service commit
-    local packageJsonPath="apps/$SERVICE/package.json"
-    local newVersion=$(node -p "require('./$packageJsonPath').version")
+    packageJsonPath="apps/$SERVICE/package.json"
+    newVersion=$(node -p "require('./$packageJsonPath').version")
 
     git commit -m "Bump $SERVICE version to $newVersion" || {
       echo -e "${YELLOW}No changes to commit for $SERVICE${NC}"
