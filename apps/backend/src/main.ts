@@ -785,10 +785,35 @@ app.get("/api/services/versions", async (req, res) => {
   // Backend version
   versions.backend = VERSION;
 
-  // Try to get frontend version (from frontend service)
+  // Try to get frontend version from version.json
   try {
-    // Frontend doesn't have a health endpoint, but we can get it from the deployed image
-    versions.frontend = "N/A";
+    // Frontend serves a version.json file created during build
+    // Try both LoadBalancer IP (from env) and internal service name
+    const frontendUrls = [];
+
+    // If we have a FRONTEND_URL env var, use that
+    if (process.env.FRONTEND_URL) {
+      frontendUrls.push(`${process.env.FRONTEND_URL}/assets/version.json`);
+    }
+
+    // Also try internal service name
+    frontendUrls.push('http://frontend/assets/version.json');
+
+    for (const url of frontendUrls) {
+      try {
+        const frontendResponse = await axios.get(url, { timeout: 2000 });
+        if (frontendResponse.data && frontendResponse.data.version) {
+          versions.frontend = frontendResponse.data.version;
+          break;
+        }
+      } catch (e) {
+        // Try next URL
+      }
+    }
+
+    if (!versions.frontend) {
+      versions.frontend = "N/A";
+    }
   } catch (error) {
     versions.frontend = "N/A";
   }
