@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: payment-system
+  namespace: NAMESPACE_PLACEHOLDER
   labels:
     app: backend
 spec:
@@ -18,7 +18,7 @@ spec:
       containers:
         - name: backend
           image: honey-store/backend:latest
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
               name: http
@@ -51,7 +51,7 @@ spec:
             - name: CONNECTION_METHOD
               value: "direct"
             - name: ALLOWED_ORIGINS
-              value: "http://localhost:4200,https://yourdomain.com"
+              value: "ALLOWED_ORIGINS_PLACEHOLDER"
           resources:
             requests:
               memory: "256Mi"
@@ -76,7 +76,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend
-  namespace: payment-system
+  namespace: NAMESPACE_PLACEHOLDER
   labels:
     app: backend
 spec:

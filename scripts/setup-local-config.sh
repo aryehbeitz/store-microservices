@@ -70,7 +70,6 @@ echo "Step 1: GCP Project ID"
 echo "========================================"
 echo ""
 
-# Try to detect available projects
 if command -v gcloud &> /dev/null; then
     echo "Detecting GCP projects..."
     projects=$(gcloud projects list --format="value(projectId)" 2>/dev/null || echo "")
@@ -230,10 +229,116 @@ echo "✓ MongoDB credentials saved to .env.local" >&2
 
 echo ""
 
-# Set default values for Artifact Registry
-echo "ARTIFACT_REGISTRY_LOCATION=us-east1" >> "$ENV_FILE"
-echo "ARTIFACT_REGISTRY_REPO=docker-repo" >> "$ENV_FILE"
+# 5. Artifact Registry Configuration
+echo "========================================"
+echo "Step 5: Artifact Registry Configuration"
+echo "========================================"
+echo ""
+
+read -p "Artifact Registry location (us-east1): " ar_location
+ar_location="${ar_location:-us-east1}"
+
+read -p "Artifact Registry repo name (docker-repo): " ar_repo
+ar_repo="${ar_repo:-docker-repo}"
+
+echo "ARTIFACT_REGISTRY_LOCATION=$ar_location" >> "$ENV_FILE"
+echo "ARTIFACT_REGISTRY_REPO=$ar_repo" >> "$ENV_FILE"
 echo "USE_GCR=true" >> "$ENV_FILE"
+echo "✓ Artifact Registry: $ar_location / $ar_repo" >&2
+
+echo ""
+
+# 6. Ingress Configuration
+echo "========================================"
+echo "Step 6: Ingress with TLS (optional)"
+echo "========================================"
+echo ""
+
+read -p "Do you want to set up Ingress with TLS? (y/N): " enable_ingress
+
+if [ "$enable_ingress" = "y" ] || [ "$enable_ingress" = "Y" ]; then
+    echo "ENABLE_INGRESS=true" >> "$ENV_FILE"
+
+    # Base domain
+    read -p "Enter your base domain (e.g., example.com): " base_domain
+    if [ -z "$base_domain" ]; then
+        echo "❌ Base domain is required for Ingress setup."
+        exit 1
+    fi
+    echo "BASE_DOMAIN=$base_domain" >> "$ENV_FILE"
+
+    # Detect IngressClasses
+    echo ""
+    echo "Detecting available IngressClasses..."
+    ingress_classes=$(kubectl get ingressclass -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || echo "")
+    if [ -n "$ingress_classes" ]; then
+        echo "Available IngressClasses: $ingress_classes"
+    fi
+    read -p "Ingress class (nginx): " ingress_class
+    ingress_class="${ingress_class:-nginx}"
+    echo "INGRESS_CLASS=$ingress_class" >> "$ENV_FILE"
+
+    # TLS secret
+    echo ""
+    read -p "TLS secret name (e.g., cf-star-tls-cert): " tls_secret
+    if [ -n "$tls_secret" ]; then
+        echo "TLS_SECRET_NAME=$tls_secret" >> "$ENV_FILE"
+        read -p "Namespace to copy TLS secret from (e.g., default): " tls_ns
+        if [ -n "$tls_ns" ]; then
+            echo "TLS_SECRET_SOURCE_NAMESPACE=$tls_ns" >> "$ENV_FILE"
+        fi
+    fi
+
+    # Get namespace for host construction
+    ns=$(grep "^K8S_NAMESPACE=" "$ENV_FILE" | cut -d= -f2)
+    ns="${ns:-default}"
+
+    # Construct hostnames
+    FRONTEND_HOST="${ns}-sandbox.${base_domain}"
+    DASHBOARD_HOST="${ns}-dashboard-sandbox.${base_domain}"
+    API_HOST="${ns}-api-sandbox.${base_domain}"
+
+    echo "FRONTEND_HOST=$FRONTEND_HOST" >> "$ENV_FILE"
+    echo "DASHBOARD_HOST=$DASHBOARD_HOST" >> "$ENV_FILE"
+    echo "API_HOST=$API_HOST" >> "$ENV_FILE"
+
+    echo ""
+    echo "✓ Ingress hosts configured:" >&2
+    echo "  Frontend:  $FRONTEND_HOST" >&2
+    echo "  Dashboard: $DASHBOARD_HOST" >&2
+    echo "  API:       $API_HOST" >&2
+else
+    echo "ENABLE_INGRESS=false" >> "$ENV_FILE"
+    echo "ℹ️  Ingress disabled. Services will use ClusterIP (port-forward or LoadBalancer)."
+fi
+
+# 7. PostgreSQL Configuration (for Temporal)
+echo ""
+echo "========================================"
+echo "Step 7: PostgreSQL Credentials (for Temporal)"
+echo "========================================"
+echo ""
+
+echo "Generate PostgreSQL password options:"
+echo "  1) Auto-generate strong password (recommended)"
+echo "  2) Enter your own password"
+echo ""
+read -p "Choose option (1 or 2): " pg_option
+
+if [ "$pg_option" = "2" ]; then
+    read -s -p "Enter PostgreSQL password: " pg_password
+    echo ""
+else
+    pg_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
+    echo "✓ Generated strong password (32 characters)" >&2
+fi
+
+read -p "PostgreSQL username (temporal): " pg_username
+pg_username="${pg_username:-temporal}"
+
+echo "POSTGRESQL_USERNAME=$pg_username" >> "$ENV_FILE"
+echo "POSTGRESQL_PASSWORD=$pg_password" >> "$ENV_FILE"
+echo "✓ PostgreSQL credentials saved to .env.local" >&2
 
 echo ""
 echo "========================================"
@@ -244,7 +349,7 @@ echo "Configuration saved to: $ENV_FILE"
 echo ""
 echo "Summary:"
 echo "--------"
-cat "$ENV_FILE" | grep -v "^#" | grep -v "^$"
+cat "$ENV_FILE" | grep -v "^#" | grep -v "^$" | sed 's/\(PASSWORD=\).*/\1********/'
 echo ""
 echo "Your deployment scripts will now automatically use these values."
 echo ""

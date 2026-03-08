@@ -14,11 +14,55 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 0
 fi
 
+# Load config
+export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+
 echo ""
 echo "========================================"
-echo "Updating Service IPs in .env.local"
+echo "Updating Service URLs in .env.local"
 echo "========================================"
 echo "Namespace: $NAMESPACE"
+echo ""
+
+# Remove old service URL entries if they exist
+sed -i.bak '/^FRONTEND_URL=/d; /^BACKEND_URL=/d; /^PAYMENT_SERVICE_URL=/d; /^ADMIN_DASHBOARD_URL=/d' "$ENV_FILE"
+rm -f "$ENV_FILE.bak"
+
+# If Ingress is enabled, use ingress hostnames instead of LoadBalancer IPs
+if [ "${ENABLE_INGRESS}" = "true" ]; then
+  echo "Ingress is enabled — using hostname-based URLs."
+  echo ""
+
+  FRONTEND_URL="https://${FRONTEND_HOST}"
+  ADMIN_DASHBOARD_URL="https://${FRONTEND_HOST}/secret-admin-dashboard-xyz"
+
+  {
+    echo ""
+    echo "# Service URLs (Ingress-based)"
+    echo "FRONTEND_URL=$FRONTEND_URL"
+    echo "ADMIN_DASHBOARD_URL=$ADMIN_DASHBOARD_URL"
+  } >> "$ENV_FILE"
+
+  echo "✓ .env.local updated with Ingress URLs"
+  echo ""
+  echo "========================================"
+  echo "Service Access URLs"
+  echo "========================================"
+  echo "Frontend:        $FRONTEND_URL"
+  echo "Admin Dashboard: $ADMIN_DASHBOARD_URL"
+  echo "Dashboard:       https://${DASHBOARD_HOST}"
+  echo "API:             https://${API_HOST}"
+  echo ""
+
+  # Check ingress status
+  echo "Ingress status:"
+  kubectl get ingress -n "$NAMESPACE" 2>/dev/null || echo "  (no ingress found)"
+  echo ""
+  exit 0
+fi
+
+# Fallback: LoadBalancer IP detection
+echo "Ingress not enabled — detecting LoadBalancer IPs..."
 echo ""
 
 # Function to get external IP or hostname for a service
@@ -91,29 +135,26 @@ else
   BACKEND_URL=""
 fi
 
-# Check payment service
-PAYMENT_TYPE=$(get_service_type "payment-service" "$NAMESPACE")
+# Check payment API service
+PAYMENT_TYPE=$(get_service_type "payment-api" "$NAMESPACE")
 if [ "$PAYMENT_TYPE" = "LoadBalancer" ]; then
-  echo "Detecting payment service IP..."
-  PAYMENT_IP=$(get_service_url "payment-service" "$NAMESPACE")
+  echo "Detecting payment API IP..."
+  PAYMENT_IP=$(get_service_url "payment-api" "$NAMESPACE")
   if [ -n "$PAYMENT_IP" ]; then
-    PAYMENT_URL="http://$PAYMENT_IP:3002"
-    echo "✓ Payment Service: $PAYMENT_URL"
+    PAYMENT_URL="http://$PAYMENT_IP:8080"
+    echo "✓ Payment API: $PAYMENT_URL"
   else
-    echo "⚠️  Payment service IP still pending"
+    echo "⚠️  Payment API IP still pending"
     PAYMENT_URL=""
   fi
 else
-  echo "ℹ️  Payment service type: $PAYMENT_TYPE (no external IP)"
+  echo "ℹ️  Payment API service type: $PAYMENT_TYPE (no external IP)"
   PAYMENT_URL=""
 fi
 
 # Update .env.local file
 echo ""
 echo "Updating .env.local..."
-
-# Remove old service URL entries if they exist
-sed -i.bak '/^FRONTEND_URL=/d; /^BACKEND_URL=/d; /^PAYMENT_SERVICE_URL=/d; /^ADMIN_DASHBOARD_URL=/d' "$ENV_FILE"
 
 # Append new service URLs
 {
@@ -130,9 +171,6 @@ sed -i.bak '/^FRONTEND_URL=/d; /^BACKEND_URL=/d; /^PAYMENT_SERVICE_URL=/d; /^ADM
     echo "PAYMENT_SERVICE_URL=$PAYMENT_URL"
   fi
 } >> "$ENV_FILE"
-
-# Remove backup file
-rm -f "$ENV_FILE.bak"
 
 echo "✓ .env.local updated"
 echo ""
@@ -154,9 +192,9 @@ else
 fi
 
 if [ -n "$PAYMENT_URL" ]; then
-  echo "Payment Service: $PAYMENT_URL"
+  echo "Payment API:     $PAYMENT_URL"
 else
-  echo "Payment Service: (ClusterIP - internal only)"
+  echo "Payment API:     (ClusterIP - internal only)"
 fi
 
 echo ""

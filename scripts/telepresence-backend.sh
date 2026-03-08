@@ -37,7 +37,7 @@ fi
 NAMESPACE="${K8S_NAMESPACE:-default}"
 
 echo -e "${YELLOW}Step 1: Connecting to Kubernetes cluster...${NC}"
-telepresence connect
+telepresence connect -n "$NAMESPACE"
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Failed to connect to cluster${NC}"
@@ -52,7 +52,7 @@ echo -e "${GREEN}✅ Backend configured for telepresence${NC}"
 echo ""
 
 echo -e "${YELLOW}Step 3: Intercepting backend service...${NC}"
-telepresence intercept backend --port 3000:3000 -n "$NAMESPACE"
+telepresence intercept backend --port 3000:3000
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Failed to intercept backend${NC}"

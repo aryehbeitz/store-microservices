@@ -13,12 +13,12 @@ fi
 if [ -z "$1" ]; then
   echo "Usage: $0 <service> [namespace]"
   echo "Services: backend, frontend, payment-service"
-  echo "Example: $0 frontend meetup3"
+  echo "Example: $0 frontend honey-store"
   exit 1
 fi
 
 SERVICE="$1"
-NAMESPACE="${2:-${K8S_NAMESPACE:-meetup3}}"
+NAMESPACE="${2:-${K8S_NAMESPACE:-default}}"
 
 # Get or set Kubernetes context
 K8S_CONTEXT="${K8S_CONTEXT}"
@@ -58,7 +58,7 @@ fi
 # Use Artifact Registry
 REGISTRY_LOCATION="${ARTIFACT_REGISTRY_LOCATION:-us-east1}"
 REGISTRY_REPO="${ARTIFACT_REGISTRY_REPO:-docker-repo}"
-REGISTRY="us-east1-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPO"
+REGISTRY="${REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPO"
 
 case "$SERVICE" in
   backend)
@@ -71,7 +71,7 @@ case "$SERVICE" in
     ;;
   payment-service)
     IMAGE_NAME="payment-service"
-    DEPLOYMENT_NAME="payment-service"
+    DEPLOYMENT_NAME="payment-api"
     ;;
   *)
     echo "Unknown service: $SERVICE"

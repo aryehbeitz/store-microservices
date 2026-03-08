@@ -9,7 +9,7 @@ if [ -z "$1" ]; then
 fi
 
 SERVICE="$1"
-K8S_NAMESPACE="${K8S_NAMESPACE:-meetup3}"
+K8S_NAMESPACE="${K8S_NAMESPACE:-default}"
 
 case "$SERVICE" in
   backend)

@@ -27,8 +27,14 @@ if ! command -v telepresence &> /dev/null; then
     exit 1
 fi
 
+# Load namespace from .env.local if it exists
+if [ -f .env.local ]; then
+    source .env.local
+fi
+NAMESPACE="${K8S_NAMESPACE:-default}"
+
 echo -e "${BLUE}Step 1: Connecting to Kubernetes cluster${NC}"
-telepresence connect
+telepresence connect -n "$NAMESPACE"
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Failed to connect to cluster${NC}"
@@ -39,12 +45,12 @@ echo -e "${GREEN}✓ Connected to cluster${NC}\n"
 
 # Update backend to use telepresence connection method
 echo -e "${BLUE}Step 2: Updating backend to use telepresence connection method${NC}"
-kubectl set env deployment/backend CONNECTION_METHOD="telepresence"
+kubectl set env deployment/backend -n "$NAMESPACE" CONNECTION_METHOD="telepresence"
 echo -e "${GREEN}✓ Backend environment updated to telepresence mode${NC}"
 
 # Restart backend to pick up new environment variables
 echo -e "\n${YELLOW}Restarting backend to pick up new environment variables...${NC}"
-kubectl rollout restart deployment/backend
+kubectl rollout restart deployment/backend -n "$NAMESPACE"
 echo -e "${GREEN}✓ Backend restarted successfully${NC}\n"
 
 echo -e "${BLUE}Step 3: Setting up intercepts${NC}"
@@ -105,7 +111,7 @@ echo ""
 echo -e "${BLUE}Press Ctrl+C to quit telepresence${NC}"
 
 # Create stop script
-cat > scripts/stop-telepresence.sh << 'EOF'
+cat > scripts/stop-telepresence.sh << EOF
 #!/bin/bash
 
 echo "Stopping telepresence..."
@@ -114,11 +120,11 @@ telepresence quit
 
 # Reset backend to default connection method
 echo "Resetting backend to default connection method..."
-kubectl set env deployment/backend CONNECTION_METHOD="direct"
+kubectl set env deployment/backend -n "$NAMESPACE" CONNECTION_METHOD="direct"
 
 # Restart backend to pick up new environment variables
 echo "Restarting backend to pick up new environment variables..."
-kubectl rollout restart deployment/backend
+kubectl rollout restart deployment/backend -n "$NAMESPACE"
 
 echo "Telepresence stopped"
 echo "Backend reset to default connection method"
