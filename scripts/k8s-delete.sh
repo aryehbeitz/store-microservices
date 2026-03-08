@@ -2,6 +2,13 @@
 
 set -e
 
+# Load local configuration if it exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+  export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 # Handle kubectl context
 if [ -z "$1" ]; then
   echo "No context specified. Available contexts:"
@@ -9,7 +16,7 @@ if [ -z "$1" ]; then
   kubectl config get-contexts
   echo ""
   echo "Usage: $0 <context-name> <namespace>"
-  echo "Example: $0 gke_my-project_us-central1_cluster-name meetup3"
+  echo "Example: $0 gke_my-project_us-central1_cluster-name honey-store"
   exit 1
 fi
 
@@ -18,7 +25,7 @@ if [ -z "$2" ]; then
   echo "No namespace specified."
   echo ""
   echo "Usage: $0 <context-name> <namespace>"
-  echo "Example: $0 gke_my-project_us-central1_cluster-name meetup3"
+  echo "Example: $0 gke_my-project_us-central1_cluster-name honey-store"
   exit 1
 fi
 
@@ -40,10 +47,42 @@ echo "Deleting Kubernetes resources in context: $CURRENT_CONTEXT"
 echo "Deleting from namespace: $NAMESPACE"
 echo ""
 
-# Delete services
-sed "s/namespace: payment-system/namespace: $NAMESPACE/g" k8s/frontend-deployment.yaml | kubectl delete -f - --ignore-not-found=true
-sed "s/namespace: payment-system/namespace: $NAMESPACE/g" k8s/backend-deployment.yaml | kubectl delete -f - --ignore-not-found=true
-sed "s/namespace: payment-system/namespace: $NAMESPACE/g" k8s/mongodb-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+namespace_sed="s/NAMESPACE_PLACEHOLDER/$NAMESPACE/g"
+
+# Delete ingress
+echo "Deleting Ingress..."
+sed "$namespace_sed" k8s/ingress.yaml | kubectl delete -f - --ignore-not-found=true 2>/dev/null || true
+
+# Delete application services
+echo "Deleting Frontend..."
+sed "$namespace_sed" k8s/frontend-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+echo "Deleting Payment Dashboard..."
+sed "$namespace_sed" k8s/payment-dashboard-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+echo "Deleting Payment Worker..."
+sed "$namespace_sed" k8s/payment-worker-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+echo "Deleting Payment API..."
+sed "$namespace_sed" k8s/payment-service-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+echo "Deleting Backend..."
+sed "$namespace_sed" k8s/backend-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+
+# Delete data services
+echo "Deleting MongoDB..."
+sed "$namespace_sed" k8s/mongodb-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+echo "Deleting Temporal..."
+sed "$namespace_sed" k8s/temporal-deployment.yaml | kubectl delete -f - --ignore-not-found=true
+echo "Deleting PostgreSQL..."
+sed "$namespace_sed" k8s/postgresql-statefulset.yaml | kubectl delete -f - --ignore-not-found=true
+
+# Delete copied TLS secret if it exists
+if [ -n "${TLS_SECRET_NAME}" ]; then
+  echo "Deleting TLS secret copy..."
+  kubectl delete secret "${TLS_SECRET_NAME}" -n "$NAMESPACE" --ignore-not-found=true
+fi
+
+# Delete secrets
+echo "Deleting secrets..."
+kubectl delete secret mongodb-secret -n "$NAMESPACE" --ignore-not-found=true
+kubectl delete secret postgresql-secret -n "$NAMESPACE" --ignore-not-found=true
 
 # Delete namespace (this will delete all resources in the namespace)
 echo "Deleting namespace: $NAMESPACE"
@@ -51,4 +90,3 @@ kubectl delete namespace "$NAMESPACE" --ignore-not-found=true
 
 echo ""
 echo "✅ All resources deleted from namespace: $NAMESPACE"
-

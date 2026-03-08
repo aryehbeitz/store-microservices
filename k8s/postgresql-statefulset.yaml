@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mongodb-pvc
+  name: postgresql-pvc
   namespace: NAMESPACE_PLACEHOLDER
 spec:
   accessModes:
@@ -11,47 +11,45 @@ spec:
       storage: 1Gi
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: mongodb
+  name: postgresql
   namespace: NAMESPACE_PLACEHOLDER
   labels:
-    app: mongodb
+    app: postgresql
 spec:
+  serviceName: postgresql
   replicas: 1
   selector:
     matchLabels:
-      app: mongodb
+      app: postgresql
   template:
     metadata:
       labels:
-        app: mongodb
+        app: postgresql
     spec:
       containers:
-        - name: mongodb
-          image: mongo:7
+        - name: postgresql
+          image: postgres:13
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 27017
-              name: mongodb
+            - containerPort: 5432
+              name: postgresql
           env:
-            - name: MONGO_INITDB_ROOT_USERNAME
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: mongodb-secret
-                  key: mongodb-root-username
-            - name: MONGO_INITDB_ROOT_PASSWORD
+                  name: postgresql-secret
+                  key: postgresql-user
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mongodb-secret
-                  key: mongodb-root-password
-            - name: MONGO_INITDB_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-secret
-                  key: mongodb-database
+                  name: postgresql-secret
+                  key: postgresql-password
           volumeMounts:
-            - name: mongodb-storage
-              mountPath: /data/db
+            - name: postgresql-storage
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres-data
           resources:
             requests:
               memory: "256Mi"
@@ -61,32 +59,32 @@ spec:
               cpu: "500m"
           livenessProbe:
             tcpSocket:
-              port: 27017
+              port: 5432
             initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             tcpSocket:
-              port: 27017
+              port: 5432
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
-        - name: mongodb-storage
+        - name: postgresql-storage
           persistentVolumeClaim:
-            claimName: mongodb-pvc
+            claimName: postgresql-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb
+  name: postgresql
   namespace: NAMESPACE_PLACEHOLDER
   labels:
-    app: mongodb
+    app: postgresql
 spec:
-  type: ClusterIP
+  clusterIP: None
   ports:
-    - port: 27017
-      targetPort: 27017
+    - port: 5432
+      targetPort: 5432
       protocol: TCP
-      name: mongodb
+      name: postgresql
   selector:
-    app: mongodb
+    app: postgresql

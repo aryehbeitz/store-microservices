@@ -9,7 +9,7 @@ if [ -z "$1" ]; then
   kubectl config get-contexts
   echo ""
   echo "Usage: $0 <context-name> <namespace>"
-  echo "Example: $0 gke_my-project_us-central1_cluster-name meetup3"
+  echo "Example: $0 gke_my-project_us-central1_cluster-name honey-store"
   exit 1
 fi
 
@@ -18,7 +18,7 @@ if [ -z "$2" ]; then
   echo "No namespace specified."
   echo ""
   echo "Usage: $0 <context-name> <namespace>"
-  echo "Example: $0 gke_my-project_us-central1_cluster-name meetup3"
+  echo "Example: $0 gke_my-project_us-central1_cluster-name honey-store"
   exit 1
 fi
 

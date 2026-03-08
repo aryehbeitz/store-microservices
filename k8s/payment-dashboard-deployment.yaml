@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: payment-dashboard
   namespace: NAMESPACE_PLACEHOLDER
   labels:
-    app: frontend
+    app: payment-dashboard
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
+      app: payment-dashboard
   template:
     metadata:
       labels:
-        app: frontend
+        app: payment-dashboard
     spec:
       containers:
-        - name: frontend
-          image: honey-store/frontend:latest
+        - name: payment-dashboard
+          image: honey-store/payment-dashboard:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -45,10 +45,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: payment-dashboard
   namespace: NAMESPACE_PLACEHOLDER
   labels:
-    app: frontend
+    app: payment-dashboard
 spec:
   type: ClusterIP
   ports:
@@ -57,4 +57,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: frontend
+    app: payment-dashboard
