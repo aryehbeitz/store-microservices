@@ -10,28 +10,27 @@ if [ -f "$PROJECT_ROOT/.env.local" ]; then
   export $(cat "$PROJECT_ROOT/.env.local" | grep -v '^#' | grep -v '^$' | xargs)
 fi
 
-# Handle kubectl context
-if [ -z "$1" ]; then
+# Handle kubectl context (arg > .env.local > error)
+CONTEXT="${1:-${K8S_CONTEXT:-}}"
+if [ -z "$CONTEXT" ]; then
   echo "No context specified. Available contexts:"
   echo ""
   kubectl config get-contexts
   echo ""
-  echo "Usage: $0 <context-name> <namespace>"
-  echo "Example: $0 gke_my-project_us-central1_cluster-name honey-store"
+  echo "Usage: $0 [context-name] [namespace]"
+  echo "Or configure K8S_CONTEXT and K8S_NAMESPACE in .env.local"
   exit 1
 fi
 
-# Handle namespace
-if [ -z "$2" ]; then
+# Handle namespace (arg > .env.local > error)
+NAMESPACE="${2:-${K8S_NAMESPACE:-}}"
+if [ -z "$NAMESPACE" ]; then
   echo "No namespace specified."
   echo ""
-  echo "Usage: $0 <context-name> <namespace>"
-  echo "Example: $0 gke_my-project_us-central1_cluster-name honey-store"
+  echo "Usage: $0 [context-name] [namespace]"
+  echo "Or configure K8S_CONTEXT and K8S_NAMESPACE in .env.local"
   exit 1
 fi
-
-CONTEXT="$1"
-NAMESPACE="$2"
 
 echo "Switching to context: $CONTEXT"
 kubectl config use-context "$CONTEXT"
