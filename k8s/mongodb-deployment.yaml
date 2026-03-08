@@ -4,6 +4,7 @@ metadata:
   name: mongodb-pvc
   namespace: NAMESPACE_PLACEHOLDER
 spec:
+  storageClassName: standard-rwo
   accessModes:
     - ReadWriteOnce
   resources:
