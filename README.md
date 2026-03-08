@@ -194,19 +194,39 @@ pnpm start:backend
 
 ---
 
-## Kubernetes Deployment with Namespace & Context
+## Kubernetes Deployment
 
-### Build and Deploy to Specific Context/Namespace
+### Deploy
+
+After running `setup-local-config.sh`, deploy with a single command:
 
 ```bash
-# Build and deploy everything
-./scripts/k8s-build-and-deploy.sh <context-name> <namespace>
+# Uses K8S_CONTEXT and K8S_NAMESPACE from .env.local
+./scripts/k8s-deploy.sh
 
-# Example for GKE:
-./scripts/k8s-build-and-deploy.sh gke_my-project_us-central1_cluster-name honey-store
+# Or specify explicitly
+./scripts/k8s-deploy.sh <context-name> <namespace>
 ```
 
-### Quick Redeploy After Code Changes
+### Watch Deployment
+
+Monitor pods as they come up:
+
+```bash
+kubectl get pods -n <your-namespace> -w
+```
+
+### Verify Deployment
+
+```bash
+./scripts/verify-deployment.sh <namespace>
+```
+
+Checks all pods, services, ingress endpoints, and scans for hardcoded secrets.
+
+### Build and Deploy a Single Service
+
+After code changes, rebuild and redeploy one service:
 
 ```bash
 pnpm k8s:build-deploy:backend      # For backend
@@ -217,14 +237,14 @@ pnpm k8s:build-deploy:payment      # For payment service
 ### Delete Deployment
 
 ```bash
+# Uses K8S_CONTEXT and K8S_NAMESPACE from .env.local
+./scripts/k8s-delete.sh
+
+# Or specify explicitly
 ./scripts/k8s-delete.sh <context-name> <namespace>
 ```
 
-### Verify Deployment
-
-```bash
-./scripts/verify-deployment.sh <namespace>
-```
+This removes all resources including PVCs, secrets, ingress, and the namespace itself.
 
 ## Ingress & TLS
 
@@ -324,8 +344,8 @@ pnpm reset
 
 # Stop dev commands — just press Ctrl+C (cleanup is automatic)
 
-# Delete K8s deployment
-./scripts/k8s-delete.sh <context> <namespace>
+# Delete entire K8s deployment (namespace + all resources)
+./scripts/k8s-delete.sh
 ```
 
 ## License
